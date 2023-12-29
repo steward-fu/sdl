@@ -1,0 +1,8 @@
+Porting libSDL-1.2 to QX1000 smartphone.
+
+Here is the configuration:
+$ ./configure --enable-video-qx1000 --build=arm-linux
+
+
+04/23/2023
+Steward Fu
