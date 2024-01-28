@@ -31,7 +31,7 @@
 #include "../../events/SDL_events_c.h"
 
 #if 0
-    #define debug(...) printf(__VA_ARGS__)
+    #define debug(...) printf("[SDL] "__VA_ARGS__)
 #else
     #define debug(...) (void)0
 #endif
@@ -563,6 +563,10 @@ static SDL_VideoDevice *QX1000_CreateDevice(int devindex)
     device->InitOSKeymap = QX1000_InitOSKeymap;
     device->PumpEvents = QX1000_PumpEvents;
     device->free = QX1000_DeleteDevice;
+    device->CreateWMCursor = NULL;
+    device->ShowWMCursor = NULL;
+    device->CheckMouseMode = NULL;
+    device->UpdateMouse = NULL;
     return device;
 }
 
