@@ -83,6 +83,10 @@ int SDL_InitSubSystem(Uint32 flags)
 	}
 #endif
 
+#if SDL_VIDEO_DRIVER_QX1000
+	SDL_putenv("SDL_VIDEODRIVER=qx1000");
+#endif
+
 #if !SDL_VIDEO_DISABLED
 	/* Initialize the video/event subsystem */
 	if ( (flags & SDL_INIT_VIDEO) && !(SDL_initialized & SDL_INIT_VIDEO) ) {
