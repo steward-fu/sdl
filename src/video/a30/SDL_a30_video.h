@@ -39,11 +39,43 @@
 
 #define _THIS SDL_VideoDevice *this
 
-#define LCD_W 640
-#define LCD_H 480
+#define PREFIX  "[SDL] "
+#define LCD_W   640
+#define LCD_H   480
 
-struct _a30 {
+enum _TEX_TYPE {
+    TEX_SCR = 0,
+    TEX_MAX
+};
+
+struct _video {
+    SDL_Surface *vsurf;
+
+    EGLConfig eglConfig;
+    EGLDisplay eglDisplay;
+    EGLContext eglContext;
+    EGLSurface eglSurface;
+    GLuint vShader;
+    GLuint fShader;
+    GLuint pObject;
+    GLuint texID[TEX_MAX];
+    GLint posLoc;
+    GLint texLoc;
+    GLint samLoc;
+    GLint alphaLoc;
+
+    int mem_fd;
+    int fb_flip;
     void *fb_mem[2];
+    uint8_t* ccu_mem;
+    uint8_t* dac_mem;
+    uint32_t *vol_ptr;
+    uint32_t *cpu_ptr;
+};
+
+struct _cpu_clock {
+    int clk;
+    uint32_t reg;
 };
 
 #endif
