@@ -355,11 +355,15 @@ static int A30_VideoInit(_THIS, SDL_PixelFormat *vformat)
 
     vid.fb_mem[0] = malloc(LCD_W * LCD_H * 4);
     vid.fb_mem[1] = malloc(LCD_W * LCD_H * 4);
+
+    A30_EventInit();
     return 0;
 }
 
 static void A30_VideoQuit(_THIS)
 {
+    A30_EventDeinit();
+
     glDeleteTextures(TEX_MAX, vid.texID);
     eglMakeCurrent(vid.eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroyContext(vid.eglDisplay, vid.eglContext);
