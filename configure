@@ -948,6 +948,7 @@ enable_mintaudio
 enable_nasm
 enable_altivec
 enable_ipod
+enable_video_a30
 enable_video_qx1000
 enable_video_nanox
 enable_nanox_debug
@@ -1665,6 +1666,7 @@ Optional Features:
   --enable-nasm           use nasm assembly blitters on x86 [[default=yes]]
   --enable-altivec        use altivec assembly blitters on PPC [[default=yes]]
   --enable-ipod           configure SDL to work with iPodLinux [[default=no]]
+  --enable-video-a30      use Miyoo A30 video driver [[default=no]]
   --enable-video-qx1000   use Fxtec Pro1 video driver [[default=no]]
   --enable-video-nanox    use nanox video driver [[default=no]]
   --enable-nanox-debug    print debug messages [[default=no]]
@@ -18051,6 +18053,25 @@ fi
     fi
 }
 
+CheckA30()
+{
+    # Check whether --enable-video-a30 was given.
+if test "${enable_video_a30+set}" = set; then :
+  enableval=$enable_video_a30;
+else
+  enable_video_a30=no
+fi
+
+
+    if test x$enable_video_a30 = xyes; then
+        $as_echo "#define SDL_VIDEO_DRIVER_A30 1" >>confdefs.h
+
+        SOURCES="$SOURCES $srcdir/src/video/a30/*.c"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lEGL -lGLESv2"
+        have_video=no
+    fi
+}
+
 CheckQX1000()
 {
     # Check whether --enable-video-qx1000 was given.
@@ -21582,6 +21603,7 @@ case "$host" in
         CheckNAS
         CheckX11
         CheckNANOX
+        CheckA30
         CheckQX1000
         CheckFBCON
         CheckDirectFB

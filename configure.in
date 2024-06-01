@@ -939,6 +939,20 @@ CheckQX1000()
     fi
 }
 
+CheckA30()
+{
+    AC_ARG_ENABLE(video-a30,
+        AC_HELP_STRING([--enable-video-a30], [use Fxtec Pro1 video driver [[default=no]]]),
+        , enable_video_a30=no)
+
+    if test x$enable_video_a30 = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_A30)
+        SOURCES="$SOURCES $srcdir/src/video/a30/*.c"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lEGL -lGLESv2"
+        have_video=no
+    fi
+}
+
 dnl Find the nanox include and library directories
 CheckNANOX()
 {
@@ -2376,6 +2390,7 @@ case "$host" in
         CheckNAS
         CheckX11
         CheckNANOX
+        CheckA30
         CheckQX1000
         CheckFBCON
         CheckDirectFB

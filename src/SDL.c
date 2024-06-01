@@ -83,6 +83,10 @@ int SDL_InitSubSystem(Uint32 flags)
 	}
 #endif
 
+#if SDL_VIDEO_DRIVER_A30
+	SDL_putenv("SDL_VIDEODRIVER=a30");
+#endif
+
 #if SDL_VIDEO_DRIVER_QX1000
 	SDL_putenv("SDL_VIDEODRIVER=qx1000");
 #endif
