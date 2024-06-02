@@ -312,8 +312,23 @@ static int A30_VideoInit(_THIS, SDL_PixelFormat *vformat)
         EGL_NONE,
     };
 
-    set_best_match_cpu_clock(1350);
-    set_core(2);
+    vid.mem_fd = open("/dev/mem", O_RDWR);
+    if (vid.mem_fd < 0) {
+        printf("Failed to open /dev/mem\n");
+        return -1;
+    }
+
+    vid.ccu_mem = mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, vid.mem_fd, CCU_BASE);
+    if (vid.ccu_mem == MAP_FAILED) {
+        printf("Failed to map memory\n");
+        return -1;
+    }
+
+    printf(PREFIX"CCU MMap %p\n", vid.ccu_mem);
+    vid.cpu_ptr = (uint32_t *)&vid.ccu_mem[0x00];
+
+    set_best_match_cpu_clock(INIT_CPU_CLOCK);
+    set_core(INIT_CPU_CORE);
 
     vid.eglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglInitialize(vid.eglDisplay, &egl_major, &egl_minor);
@@ -362,6 +377,10 @@ static int A30_VideoInit(_THIS, SDL_PixelFormat *vformat)
 
 static void A30_VideoQuit(_THIS)
 {
+    set_best_match_cpu_clock(DEINIT_CPU_CLOCK);
+    set_core(DEINIT_CPU_CORE);
+    system("echo ondemand > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+
     A30_EventDeinit();
 
     glDeleteTextures(TEX_MAX, vid.texID);
@@ -375,8 +394,15 @@ static void A30_VideoQuit(_THIS)
     vid.fb_mem[0] = NULL;
     vid.fb_mem[1] = NULL;
 
-    set_best_match_cpu_clock(648);
-    set_core(2);
+    if (vid.ccu_mem != MAP_FAILED) {
+        munmap(vid.ccu_mem, 4096);
+        vid.ccu_mem = NULL;
+    }
+
+    if (vid.mem_fd > 0) {
+        close(vid.mem_fd);
+        vid.mem_fd = -1;
+    }
 }
 
 static SDL_Surface *A30_SetVideoMode(_THIS, SDL_Surface *current, int width, int height, int bpp, Uint32 flags)

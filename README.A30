@@ -1,13 +1,14 @@
 Porting libSDL-1.2 to Miyoo A30 Handheld.
 
-Here is the configuration:
+Here are the building commands:
 $ export PATH=/opt/a30/bin:$PATH
 $ export CC=arm-linux-gcc
 $ export CXX=arm-linux-g++
 $ export LD=arm-linux-ld
 $ export AS=arm-linux-as
+$ ./autogen.sh
 $ ./configure --enable-video-a30 --disable-video-x11 --build=arm-linux
 
 
-05/31/2024
+06/02/2024
 Steward Fu

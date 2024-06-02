@@ -39,9 +39,14 @@
 
 #define _THIS SDL_VideoDevice *this
 
-#define PREFIX  "[SDL] "
-#define LCD_W   640
-#define LCD_H   480
+#define PREFIX              "[SDL] "
+#define LCD_W               640
+#define LCD_H               480
+#define CCU_BASE            0x01c20000
+#define INIT_CPU_CORE       2
+#define INIT_CPU_CLOCK      1500
+#define DEINIT_CPU_CORE     2
+#define DEINIT_CPU_CLOCK    648
 
 enum _TEX_TYPE {
     TEX_SCR = 0,
