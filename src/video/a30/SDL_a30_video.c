@@ -407,15 +407,15 @@ static void A30_VideoQuit(_THIS)
 
 static SDL_Surface *A30_SetVideoMode(_THIS, SDL_Surface *current, int width, int height, int bpp, Uint32 flags)
 {
-	if(!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
-		SDL_SetError("Failed to allocate new pixel format for requested mode");
-		return NULL;
-	}
+    if(!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
+        SDL_SetError("Failed to allocate new pixel format for requested mode");
+        return NULL;
+    }
 
     vid.vsurf = current;
-	current->flags = flags | SDL_DOUBLEBUF | SDL_PREALLOC;
-	current->w = width;
-	current->h = height;
+    current->flags = flags | SDL_DOUBLEBUF | SDL_PREALLOC;
+    current->w = width;
+    current->h = height;
     current->pitch = width * (bpp / 8);
     current->pixels = vid.fb_mem[0];
     printf(PREFIX"Width:%d, Height:%d, BPP:%d\n", width, height, bpp);
