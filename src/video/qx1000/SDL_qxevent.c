@@ -51,12 +51,12 @@ void QX1000_PumpEvents(_THIS)
 
         if (mykey[c0][1] && mymap[c0]) {
             mykey[c0][1] = 0;
-            debug("%s, key pressed %d\n", __func__, mymap[c0]);
+            debug("Key Pressed: %d\n", mymap[c0]);
             SDL_PrivateKeyboard(SDL_PRESSED, &keysym);
         }
         if (mykey[c0][0] && mymap[c0]) {
             mykey[c0][0] = 0;
-            debug("%s, key released %d\n", __func__, mymap[c0]);
+            debug("Key Released: %d\n", mymap[c0]);
             SDL_PrivateKeyboard(SDL_RELEASED, &keysym);
         }
     }
@@ -64,7 +64,6 @@ void QX1000_PumpEvents(_THIS)
 
 void QX1000_InitOSKeymap(_THIS)
 {
-    debug("%s\n", __func__);
     mymap[KEY_0]          = SDLK_0;
     mymap[KEY_1]          = SDLK_1;
     mymap[KEY_2]          = SDLK_2;
