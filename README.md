@@ -1,2 +1,2 @@
 # Introduction
-This repository hosts the source code that ports for Miyoo A30 and F(x)tec Pro1 devices.
+This repository hosts the SDL v1.2 source code that ports for both Miyoo A30 and F(x)tec Pro1 devices. For Miyoo A30, it utilizes the OpenGL ES 2.0 for rendering. If the CFW installed on Miyoo A30 doesn't support the OpenGL ES 2.0, then, it means you cannot use this SDL v1.2 on your device. For F(x)tec Pro1, the rendering is based on the Wayland Client and it only tested on Sailfish OS with v4.5.0.19.
