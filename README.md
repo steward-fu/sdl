@@ -50,6 +50,7 @@ $ sudo make install
 
 # How to Run
 ## Miyoo A30
+Put libSDL-1.2.so.0 and the executable file in the same folder
 ```
 # kill -STOP `pidof MainUI`
 # LD_LIBRARY_PATH=/mnt/SDCARD ./xxx
