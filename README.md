@@ -3,7 +3,7 @@ This repository hosts the SDL v1.2 source code that ports for both Miyoo A30 and
 
 &nbsp;
 
-# Building
+# How to Build
 ## Miyoo A30
 The environment is based on Debian 12 (bookworm).
 
@@ -44,4 +44,14 @@ $ ./autogen.sh
 $ ./configure --enable-video-qx1000 --disable-video-x11 --build=arm-linux
 $ make -j4
 $ sudo make install
+```
+
+&nbsp;
+
+# How to Run
+## Miyoo A30
+```
+# kill -STOP `pidof MainUI`
+# LD_LIBRARY_PATH=/mnt/SDCARD ./xxx
+# kill -CONT `pidof MainUI`
 ```
