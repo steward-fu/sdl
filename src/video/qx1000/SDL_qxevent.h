@@ -18,8 +18,14 @@
 */
 
 #include "SDL_config.h"
+
+#ifndef __SDL_qxevent_H__
+#define __SDL_qxevent_H__
+
 #include "SDL_qxvideo.h"
 
 void QX1000_PumpEvents(_THIS);
 void QX1000_InitOSKeymap(_THIS);
+
+#endif
 

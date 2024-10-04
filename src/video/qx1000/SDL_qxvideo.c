@@ -81,14 +81,14 @@ GLfloat egl_fb_vertices[] = {
 GLushort egl_indices[] = {0, 1, 2, 0, 2, 3};
 
 const char *vShaderSrc =
-    "attribute vec4 a_position;   \n"
-    "attribute vec2 a_texCoord;   \n"
-    "varying vec2 v_texCoord;     \n"
-    "void main()                  \n"
-    "{                            \n"
-    "   gl_Position = a_position; \n"
-    "   v_texCoord = a_texCoord;  \n"
-    "}                            \n";
+    "attribute vec4 a_position;    \n"
+    "attribute vec2 a_texCoord;    \n"
+    "varying vec2 v_texCoord;      \n"
+    "void main()                   \n"
+    "{                             \n"
+    "    gl_Position = a_position; \n"
+    "    v_texCoord = a_texCoord;  \n"
+    "}                             \n";
 
 const char *fShaderSrc =
     "#ifdef GL_ES                                              \n"
@@ -125,8 +125,8 @@ static struct wl_registry_listener cb_global = {
 static void* wl_thread(void* pParam)
 {
     debug("%s++\n", __func__);
-    while(thread_run){
-        if(wl.init && wl.ready){
+    while (thread_run) {
+        if (wl.init && wl.ready) {
             wl_display_dispatch(wl.display);
         }
         usleep(100);
@@ -143,13 +143,13 @@ static void* keypad_thread(void* pParam)
 
     debug("%s++\n", __func__);
     fd = open(path, O_RDONLY);
-    if(fd < 0){
+    if (fd < 0) {
         debug("%s, failed to open %s\n", __func__, path);
         return NULL;
     }
 
     fcntl(fd, F_SETFL, O_NONBLOCK);
-    while(thread_run){
+    while (thread_run) {
         if (read(fd, &ev, sizeof(struct input_event)) > 0) {
             if (ev.type == EV_KEY) {
                 mykey[ev.code][ev.value] = 1;
@@ -163,16 +163,16 @@ static void* keypad_thread(void* pParam)
     return NULL;
 }
 
-static void cb_ping(void *dat, struct wl_shell_surface *shell_surf, uint32_t serial)
+static void cb_ping(void* dat, struct wl_shell_surface* shell_surf, uint32_t serial)
 {
     wl_shell_surface_pong(shell_surf, serial);
 }
 
-static void cb_configure(void *dat, struct wl_shell_surface *shell_surf, uint32_t edges, int32_t w, int32_t h)
+static void cb_configure(void* dat, struct wl_shell_surface* shell_surf, uint32_t edges, int32_t w, int32_t h)
 {
 }
 
-static void cb_popup_done(void *dat, struct wl_shell_surface *shell_surf)
+static void cb_popup_done(void* dat, struct wl_shell_surface* shell_surf)
 {
 }
 
@@ -182,7 +182,7 @@ static const struct wl_shell_surface_listener cb_shell_surf = {
     cb_popup_done
 };
 
-static void cb_handle(void *dat, struct wl_registry *reg, uint32_t id, const char *intf, uint32_t ver)
+static void cb_handle(void* dat, struct wl_registry* reg, uint32_t id, const char* intf, uint32_t ver)
 {
     if (strcmp(intf, "wl_compositor") == 0) {
         wl.compositor = wl_registry_bind(reg, id, &wl_compositor_interface, 1);
@@ -192,7 +192,7 @@ static void cb_handle(void *dat, struct wl_registry *reg, uint32_t id, const cha
     }
 }
 
-static void cb_remove(void *dat, struct wl_registry *reg, uint32_t id)
+static void cb_remove(void* dat, struct wl_registry* reg, uint32_t id)
 {
 }
 
@@ -332,29 +332,27 @@ void egl_create(void)
     debug("%s, texCoordLoc 0x%x\n", __func__, wl.egl.texCoordLoc);
 }
 
-static void* draw_thread(void *pParam)
+static void* draw_thread(void* pParam)
 {
     debug("%s++\n", __func__);
     wl_create();
     egl_create();
 
     wl.init = 1;
-    while(thread_run){
-        if(wl.ready){
+    while (thread_run) {
+        if (wl.ready) {
             glVertexAttribPointer(wl.egl.positionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), egl_bg_vertices);
             glVertexAttribPointer(wl.egl.texCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &egl_bg_vertices[3]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
-                wl.info.w, wl.info.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, wl.info.w, wl.info.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, egl_indices);
 
             glVertexAttribPointer(wl.egl.positionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), egl_fb_vertices);
             glVertexAttribPointer(wl.egl.texCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &egl_fb_vertices[3]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 
-                wl.info.w, wl.info.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.pixels[wl.flip ^ 1]);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, wl.info.w, wl.info.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.pixels[wl.flip ^ 1]);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, egl_indices);
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
         }
-        else{
+        else {
             usleep(1000);
         }
     }
@@ -367,10 +365,10 @@ static int QX1000_Available(void)
     return 1;
 }
 
-static void QX1000_DeleteDevice(SDL_VideoDevice *device)
+static void QX1000_DeleteDevice(SDL_VideoDevice* device)
 {
     debug("%s\n", __func__);
-    if(thread_run){
+    if (thread_run) {
         thread_run = 0;
         pthread_join(thread_id[0], NULL);
         pthread_join(thread_id[1], NULL);
@@ -380,31 +378,31 @@ static void QX1000_DeleteDevice(SDL_VideoDevice *device)
         free(wl.bg);
     }
 
-    if(device){
+    if (device) {
         SDL_free(device);
     }
 }
 
-static int QX1000_HWAccelBlit(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_Rect *dstrect)
+static int QX1000_HWAccelBlit(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect)
 {
     debug("%s\n", __func__);
     return 0;
 }
 
-static int QX1000_CheckHWBlit(_THIS, SDL_Surface *src, SDL_Surface *dst)
+static int QX1000_CheckHWBlit(_THIS, SDL_Surface* src, SDL_Surface* dst)
 {
     debug("%s\n", __func__);
     src->map->hw_blit = QX1000_HWAccelBlit;
     return 1;
 }
 
-static SDL_Rect **QX1000_ListModes(_THIS, SDL_PixelFormat *format, Uint32 flags)
+static SDL_Rect** QX1000_ListModes(_THIS, SDL_PixelFormat* format, Uint32 flags)
 {
     debug("%s\n", __func__);
-    return (SDL_Rect **)-1;
+    return (SDL_Rect**)-1;
 }
 
-static int QX1000_VideoInit(_THIS, SDL_PixelFormat *vformat)
+static int QX1000_VideoInit(_THIS, SDL_PixelFormat* vformat)
 {
     debug("%s\n", __func__);
     thread_run = 1;
@@ -413,20 +411,20 @@ static int QX1000_VideoInit(_THIS, SDL_PixelFormat *vformat)
     pthread_create(&thread_id[0], NULL, wl_thread, NULL);
     pthread_create(&thread_id[1], NULL, keypad_thread, NULL);
     pthread_create(&thread_id[2], NULL, draw_thread, NULL);
-    while(wl.init == 0){
+    while (wl.init == 0) {
         usleep(100000);
     }
     return 0;
 }
 
-static SDL_Surface *QX1000_SetVideoMode(_THIS, SDL_Surface *current, int width, int height, int bpp, Uint32 flags)
+static SDL_Surface* QX1000_SetVideoMode(_THIS, SDL_Surface* current, int width, int height, int bpp, Uint32 flags)
 {
     debug("%s\n", __func__);
 
-    if(width == 0){
+    if (width == 0) {
         width = 640;
     }
-    if(height == 0){
+    if (height == 0) {
         height = 480;
     }
     bpp = 16;
@@ -464,7 +462,7 @@ static SDL_Surface *QX1000_SetVideoMode(_THIS, SDL_Surface *current, int width, 
     wl.pixels[1] = (uint16_t*)(wl.data + wl.info.size);
     debug("%s, pixels:%p\n", __func__, wl.data);
 
-	if(!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
+	if (!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
 		SDL_SetError("failed to allocate new pixel format for requested mode");
 		return NULL;
 	}
@@ -479,45 +477,41 @@ static SDL_Surface *QX1000_SetVideoMode(_THIS, SDL_Surface *current, int width, 
     return current;
 }
 
-static int QX1000_AllocHWSurface(_THIS, SDL_Surface *surface)
+static int QX1000_AllocHWSurface(_THIS, SDL_Surface* surface)
 {
     debug("%s\n", __func__);
     return 0;
 }
 
-static void QX1000_FreeHWSurface(_THIS, SDL_Surface *surface)
+static void QX1000_FreeHWSurface(_THIS, SDL_Surface* surface)
 {
     debug("%s\n", __func__);
 }
 
-static int QX1000_LockHWSurface(_THIS, SDL_Surface *surface)
+static int QX1000_LockHWSurface(_THIS, SDL_Surface* surface)
 {
     return 0;
 }
 
-static void QX1000_UnlockHWSurface(_THIS, SDL_Surface *surface)
+static void QX1000_UnlockHWSurface(_THIS, SDL_Surface* surface)
 {
 }
 
-static int QX1000_FlipHWSurface(_THIS, SDL_Surface *surface)
+static int QX1000_FlipHWSurface(_THIS, SDL_Surface* surface)
 {
-    if(wl.init && wl.ready){
-        wl.flip^= 1;
+    if (wl.init && wl.ready) {
+        wl.flip ^= 1;
         vsurf->pixels = wl.pixels[wl.flip];
     }
     return 0;
 }
 
-static void QX1000_UpdateRects(_THIS, int numrects, SDL_Rect *rects)
+static void QX1000_UpdateRects(_THIS, int numrects, SDL_Rect* rects)
 {
-    if(wl.init && wl.ready){
-        debug("%s\n", __func__);
-        wl.flip^= 1;
-        vsurf->pixels = wl.pixels[wl.flip];
-    }
+    QX1000_FlipHWSurface(NULL);
 }
 
-static int QX1000_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors)
+static int QX1000_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color* colors)
 {
     debug("%s\n", __func__);
     return 0;
@@ -528,12 +522,12 @@ static void QX1000_VideoQuit(_THIS)
     debug("%s\n", __func__);
 }
 
-static SDL_VideoDevice *QX1000_CreateDevice(int devindex)
+static SDL_VideoDevice* QX1000_CreateDevice(int devindex)
 {
-    SDL_VideoDevice *device = NULL;
+    SDL_VideoDevice* device = NULL;
 
     debug("%s\n", __func__);
-    device = (SDL_VideoDevice *)SDL_malloc(sizeof(SDL_VideoDevice));
+    device = (SDL_VideoDevice*)SDL_malloc(sizeof(SDL_VideoDevice));
     if (device == NULL) {
         SDL_OutOfMemory();
         return 0;

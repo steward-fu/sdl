@@ -43,18 +43,18 @@
 
 #define _THIS SDL_VideoDevice *this
 
-#define MAX_FB 2
-#define LCD_W  1080
-#define LCD_H  2160
+#define MAX_FB  2
+#define LCD_W   1080
+#define LCD_H   2160
 
 struct _wayland {
-    struct wl_shell *shell;
-    struct wl_region *region;
-    struct wl_display *display;
-    struct wl_surface *surface;
-    struct wl_registry *registry;
-    struct wl_compositor *compositor;
-    struct wl_shell_surface *shell_surface;
+    struct wl_shell* shell;
+    struct wl_region* region;
+    struct wl_display* display;
+    struct wl_surface* surface;
+    struct wl_registry* registry;
+    struct wl_compositor* compositor;
+    struct wl_shell_surface* shell_surface;
 
     struct _egl {
         EGLConfig config;
@@ -70,22 +70,22 @@ struct _wayland {
         GLint positionLoc;
         GLint texCoordLoc;
         GLint samplerLoc;
-        struct wl_egl_window *window;
-    }egl;
+        struct wl_egl_window* window;
+    } egl;
     
     struct _org {
         int w;
         int h;
         int bpp;
         int size;
-    }info;
+    } info;
 
     int init;
     int ready;
     int flip;
-    uint8_t *bg;
-    uint8_t *data;
-    uint16_t *pixels[MAX_FB];
+    uint8_t* bg;
+    uint8_t* data;
+    uint16_t* pixels[MAX_FB];
 };
 
 #endif
