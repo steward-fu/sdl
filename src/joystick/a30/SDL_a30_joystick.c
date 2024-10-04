@@ -488,6 +488,7 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
                 if (pre_left == 0) {
                     pre_left = 1;
                     keysym.sym = l_key;
+printf("L 1\n");
                     SDL_PrivateKeyboard(SDL_PRESSED, &keysym);
                 }
             }
@@ -495,6 +496,7 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
                 if (pre_right == 0) {
                     pre_right = 1;
                     keysym.sym = r_key;
+printf("R 1\n");
                     SDL_PrivateKeyboard(SDL_PRESSED, &keysym);
                 }
             }
@@ -502,11 +504,13 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
                 if (pre_left != 0) {
                     pre_left = 0;
                     keysym.sym = l_key;
+printf("L 0\n");
                     SDL_PrivateKeyboard(SDL_RELEASED, &keysym);
                 }
                 if (pre_right != 0) {
                     pre_right = 0;
                     keysym.sym = r_key;
+printf("R 0\n");
                     SDL_PrivateKeyboard(SDL_RELEASED, &keysym);
                 }
             }
@@ -518,6 +522,7 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
                 if (pre_up == 0) {
                     pre_up = 1;
                     keysym.sym = u_key;
+printf("U 1\n");
                     SDL_PrivateKeyboard(SDL_PRESSED, &keysym);
                 }
             }
@@ -525,6 +530,7 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
                 if (pre_down == 0) {
                     pre_down = 1;
                     keysym.sym = d_key;
+printf("D 1\n");
                     SDL_PrivateKeyboard(SDL_PRESSED, &keysym);
                 }
             }
@@ -532,11 +538,13 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
                 if (pre_up != 0) {
                     pre_up = 0;
                     keysym.sym = u_key;
+printf("U 0\n");
                     SDL_PrivateKeyboard(SDL_RELEASED, &keysym);
                 }
                 if (pre_down != 0) {
                     pre_down = 0;
                     keysym.sym = d_key;
+printf("D 0\n");
                     SDL_PrivateKeyboard(SDL_RELEASED, &keysym);
                 }
             }
