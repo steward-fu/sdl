@@ -53,6 +53,6 @@ $ sudo make install
 Put libSDL-1.2.so.0 and the executable file in the same folder
 ```
 # kill -STOP `pidof MainUI`
-# LD_LIBRARY_PATH=/mnt/SDCARD ./xxx
+# LD_LIBRARY_PATH=. ./xxx
 # kill -CONT `pidof MainUI`
 ```
