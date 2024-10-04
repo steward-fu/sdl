@@ -50,7 +50,6 @@ GLushort indices[] = {0, 1, 2, 0, 2, 3};
 const char *vShaderSrc =
     "attribute vec4 a_position;   \n"
     "attribute vec2 a_texCoord;   \n"
-    "attribute float a_alpha;     \n"
     "varying vec2 v_texCoord;     \n"
     "void main()                  \n"
     "{                            \n"
@@ -61,24 +60,32 @@ const char *vShaderSrc =
     "}                                   \n";
 
 const char *fShaderSrc =
-    "precision mediump float;                                  \n"
-    "varying vec2 v_texCoord;                                  \n"
-    "uniform float s_alpha;                                    \n"
-    "uniform sampler2D s_texture;                              \n"
-    "void main()                                               \n"
-    "{                                                         \n"
-    "    if (s_alpha >= 2.0) {                                 \n"
-    "        gl_FragColor = texture2D(s_texture, v_texCoord);  \n"
-    "    }                                                     \n"
-    "    else if (s_alpha > 0.0) {                             \n"
-    "        vec3 tex = texture2D(s_texture, v_texCoord).rgb;  \n"
-    "        gl_FragColor = vec4(tex, s_alpha);                \n"
-    "    }                                                     \n"
-    "    else {                                                \n"
-    "        vec3 tex = texture2D(s_texture, v_texCoord).rgb;  \n"
-    "        gl_FragColor = vec4(tex, 1.0);                    \n"
-    "    }                                                     \n"
-    "}                                                         \n";
+    "precision mediump float;                                       \n"
+    "varying vec2 v_texCoord;                                       \n"
+    "uniform int s_depth;                                           \n"
+    "uniform float s_alpha;                                         \n"
+    "uniform sampler2D s_texture;                                   \n"
+    "void main()                                                    \n"
+    "{                                                              \n"
+    "    vec3 tex;                                                  \n"
+    "    if (s_alpha >= 2.0) {                                      \n"
+    "        gl_FragColor = texture2D(s_texture, v_texCoord);       \n"
+    "    }                                                          \n"
+    "    else {                                                     \n"
+    "        if (s_depth == 16) {                                   \n"
+    "            tex = texture2D(s_texture, v_texCoord).rgb;        \n"
+    "        }                                                      \n"
+    "        else {                                                 \n"
+    "            tex = texture2D(s_texture, v_texCoord).bgr;        \n"
+    "        }                                                      \n"
+    "        if (s_alpha > 0.0) {                                   \n"
+    "            gl_FragColor = vec4(tex, s_alpha);                 \n"
+    "        }                                                      \n"
+    "        else {                                                 \n"
+    "            gl_FragColor = vec4(tex, 1.0);                     \n"
+    "        }                                                      \n"
+    "    }                                                          \n"
+    "}                                                              \n";
 
 static struct _cpu_clock cpu_clock[] = {
     {96, 0x80000110},
@@ -356,6 +363,7 @@ static int A30_VideoInit(_THIS, SDL_PixelFormat *vformat)
     vid.texLoc = glGetAttribLocation(vid.pObject, "a_texCoord");
     vid.samLoc = glGetUniformLocation(vid.pObject, "s_texture");
     vid.alphaLoc = glGetUniformLocation(vid.pObject, "s_alpha");
+    vid.depthLoc = glGetUniformLocation(vid.pObject, "s_depth");
 
     glGenTextures(TEX_MAX, vid.texID);
 
@@ -366,6 +374,7 @@ static int A30_VideoInit(_THIS, SDL_PixelFormat *vformat)
     glEnableVertexAttribArray(vid.posLoc);
     glEnableVertexAttribArray(vid.texLoc);
     glUniform1i(vid.samLoc, 0);
+    glUniform1i(vid.depthLoc, 16);
     glUniform1f(vid.alphaLoc, 0.0);
 
     vid.fb_mem[0] = malloc(LCD_W * LCD_H * 4);
@@ -418,6 +427,7 @@ static SDL_Surface *A30_SetVideoMode(_THIS, SDL_Surface *current, int width, int
     current->h = height;
     current->pitch = width * (bpp / 8);
     current->pixels = vid.fb_mem[0];
+    glUniform1i(vid.depthLoc, bpp);
     printf(PREFIX"Width:%d, Height:%d, BPP:%d\n", width, height, bpp);
     return current;
 }

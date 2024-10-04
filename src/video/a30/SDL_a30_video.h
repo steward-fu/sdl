@@ -67,7 +67,8 @@ struct _video {
     GLint posLoc;
     GLint texLoc;
     GLint samLoc;
-    GLint alphaLoc;
+    GLint depthLoc;
+    GLfloat alphaLoc;
 
     int mem_fd;
     int fb_flip;
