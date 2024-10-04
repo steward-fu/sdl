@@ -508,7 +508,7 @@ static int QX1000_FlipHWSurface(_THIS, SDL_Surface* surface)
 
 static void QX1000_UpdateRects(_THIS, int numrects, SDL_Rect* rects)
 {
-    QX1000_FlipHWSurface(NULL);
+    QX1000_FlipHWSurface(NULL, NULL);
 }
 
 static int QX1000_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color* colors)
