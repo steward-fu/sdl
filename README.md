@@ -5,6 +5,8 @@ This repository hosts the SDL v1.2 source code that ports for both Miyoo A30 and
 
 # Building
 ## Miyoo A30
+The environment is based on Debian 12 (bookworm).
+
 ```
 $ cd
 $ wget https://github.com/steward-fu/website/releases/download/miyoo-a30/a30_toolchain-v1.0.tar.gz
@@ -27,6 +29,8 @@ $ make -j4
 &nbsp;
 
 ## F(x)tec Pro1
+The environment is based on Sailfish OS v4.5.0.19.
+
 ```
 $ cd
 $ git clone https://github.com/steward-fu/sdl
