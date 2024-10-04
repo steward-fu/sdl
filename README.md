@@ -43,4 +43,5 @@ $ cd sdl
 $ ./autogen.sh
 $ ./configure --enable-video-qx1000 --disable-video-x11 --build=arm-linux
 $ make -j4
+$ sudo make install
 ```
