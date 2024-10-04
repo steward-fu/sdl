@@ -24,6 +24,11 @@ $ cd sdl
 $ ./autogen.sh
 $ ./configure --enable-video-a30 --disable-video-x11 --build=arm-linux
 $ make -j4
+
+$ ls build/.libs/*.so*
+  build/.libs/libSDL.so
+  build/.libs/libSDL-1.2.so.0
+  build/.libs/libSDL-1.2.so.0.11.4
 ```
 
 &nbsp;
