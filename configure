@@ -948,6 +948,7 @@ enable_mintaudio
 enable_nasm
 enable_altivec
 enable_ipod
+enable_video_pinephone
 enable_video_qx1000
 enable_video_a30
 enable_video_nanox
@@ -1666,6 +1667,8 @@ Optional Features:
   --enable-nasm           use nasm assembly blitters on x86 [[default=yes]]
   --enable-altivec        use altivec assembly blitters on PPC [[default=yes]]
   --enable-ipod           configure SDL to work with iPodLinux [[default=no]]
+  --enable-video-pinephone
+                          use PinePhone video driver [[default=no]]
   --enable-video-qx1000   use Fxtec Pro1 video driver [[default=no]]
   --enable-video-a30      use Miyoo A30 video driver [[default=no]]
   --enable-video-nanox    use nanox video driver [[default=no]]
@@ -18053,6 +18056,25 @@ fi
     fi
 }
 
+CheckPinePhone()
+{
+    # Check whether --enable-video-pinephone was given.
+if test "${enable_video_pinephone+set}" = set; then :
+  enableval=$enable_video_pinephone;
+else
+  enable_video_pinephone=no
+fi
+
+
+    if test x$enable_video_pinephone = xyes; then
+        $as_echo "#define SDL_VIDEO_DRIVER_PINEPHONE 1" >>confdefs.h
+
+        SOURCES="$SOURCES $srcdir/src/video/pinephone/*.c"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2"
+        have_video=no
+    fi
+}
+
 CheckQX1000()
 {
     # Check whether --enable-video-qx1000 was given.
@@ -21611,6 +21633,7 @@ case "$host" in
         CheckNANOX
         CheckA30
         CheckQX1000
+        CheckPinePhone
         CheckFBCON
         CheckDirectFB
         CheckPS2GS

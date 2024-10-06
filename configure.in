@@ -925,6 +925,20 @@ AC_HELP_STRING([--enable-ipod], [configure SDL to work with iPodLinux [[default=
     fi
 }
 
+CheckPinePhone()
+{
+    AC_ARG_ENABLE(video-pinephone,
+        AC_HELP_STRING([--enable-video-pinephone], [use PinePhone video driver [[default=no]]]),
+        , enable_video_pinephone=no)
+
+    if test x$enable_video_pinephone = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_PINEPHONE)
+        SOURCES="$SOURCES $srcdir/src/video/pinephone/*.c"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2"
+        have_video=no
+    fi
+}
+
 CheckQX1000()
 {
     AC_ARG_ENABLE(video-qx1000,
@@ -2397,6 +2411,7 @@ case "$host" in
         CheckNANOX
         CheckA30
         CheckQX1000
+        CheckPinePhone
         CheckFBCON
         CheckDirectFB
         CheckPS2GS
