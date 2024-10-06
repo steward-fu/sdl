@@ -1,4 +1,2 @@
 aclocal.m4
-configure
-test/configure
 sdl.pc
