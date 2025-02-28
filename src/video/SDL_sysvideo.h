@@ -419,6 +419,9 @@ extern VideoBootStrap A30_bootstrap;
 #if SDL_VIDEO_DRIVER_QX1000
 extern VideoBootStrap QX1000_bootstrap;
 #endif
+#if SDL_VIDEO_DRIVER_XT897
+extern VideoBootStrap XT897_bootstrap;
+#endif
 #if SDL_VIDEO_DRIVER_PINEPHONE
 extern VideoBootStrap PinePhone_bootstrap;
 #endif

@@ -950,6 +950,7 @@ enable_altivec
 enable_ipod
 enable_video_pinephone
 enable_video_qx1000
+enable_video_xt897
 enable_video_a30
 enable_video_nanox
 enable_nanox_debug
@@ -1670,6 +1671,7 @@ Optional Features:
   --enable-video-pinephone
                           use PinePhone video driver [[default=no]]
   --enable-video-qx1000   use Fxtec Pro1 video driver [[default=no]]
+  --enable-video-xt897    use Motorola XT897 video driver [[default=no]]
   --enable-video-a30      use Miyoo A30 video driver [[default=no]]
   --enable-video-nanox    use nanox video driver [[default=no]]
   --enable-nanox-debug    print debug messages [[default=no]]
@@ -18094,6 +18096,25 @@ fi
     fi
 }
 
+CheckXT897()
+{
+    # Check whether --enable-video-xt897 was given.
+if test "${enable_video_xt897+set}" = set; then :
+  enableval=$enable_video_xt897;
+else
+  enable_video_xt897=no
+fi
+
+
+    if test x$enable_video_xt897 = xyes; then
+        $as_echo "#define SDL_VIDEO_DRIVER_XT897 1" >>confdefs.h
+
+        SOURCES="$SOURCES $srcdir/src/video/xt897/*.c"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2"
+        have_video=no
+    fi
+}
+
 CheckA30()
 {
     # Check whether --enable-video-a30 was given.
@@ -21633,6 +21654,7 @@ case "$host" in
         CheckNANOX
         CheckA30
         CheckQX1000
+        CheckXT897
         CheckPinePhone
         CheckFBCON
         CheckDirectFB

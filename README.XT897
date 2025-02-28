@@ -1,0 +1,8 @@
+Porting libSDL-1.2 to Motorola XT897 smartphone.
+
+Here is the configuration:
+$ ./configure --enable-video-xt897 --disable-video-x11 --build=arm-linux
+
+
+02/28/2025
+Steward Fu
