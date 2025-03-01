@@ -30,7 +30,7 @@
 #include "../../events/SDL_sysevents.h"
 #include "../../events/SDL_events_c.h"
 
-#if 1
+#if 0
     #define debug(...) printf(__VA_ARGS__)
 #else
     #define debug(...) (void)0
