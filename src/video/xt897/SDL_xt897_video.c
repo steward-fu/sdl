@@ -334,13 +334,17 @@ void egl_create(void)
 
 static void* draw_thread(void* pParam)
 {
+    int preflip = -1;
+
     debug("%s++\n", __func__);
     wl_create();
     egl_create();
 
     wl.init = 1;
     while (thread_run) {
-        if (wl.ready) {
+        if (wl.ready && (preflip != wl.flip)) {
+            preflip = wl.flip;
+
             glVertexAttribPointer(wl.egl.positionLoc, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), egl_bg_vertices);
             glVertexAttribPointer(wl.egl.texCoordLoc, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &egl_bg_vertices[3]);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, wl.info.w, wl.info.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
