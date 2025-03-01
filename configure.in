@@ -953,6 +953,20 @@ CheckQX1000()
     fi
 }
 
+CheckXT894()
+{
+    AC_ARG_ENABLE(video-xt894,
+        AC_HELP_STRING([--enable-video-xt894], [use Motorola XT894 video driver [[default=no]]]),
+        , enable_video_xt894=no)
+
+    if test x$enable_video_xt894 = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_XT894)
+        SOURCES="$SOURCES $srcdir/src/video/xt894/*.c"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2"
+        have_video=no
+    fi
+}
+
 CheckXT897()
 {
     AC_ARG_ENABLE(video-xt897,
@@ -2425,6 +2439,7 @@ case "$host" in
         CheckNANOX
         CheckA30
         CheckQX1000
+        CheckXT894
         CheckXT897
         CheckPinePhone
         CheckFBCON
