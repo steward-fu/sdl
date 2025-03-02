@@ -139,7 +139,7 @@ static void* keypad_thread(void* pParam)
 {
     int fd = -1;
     struct input_event ev = {0};
-    const char *path = "/dev/input/event1";
+    const char *path = "/dev/input/event3";
 
     debug("%s++\n", __func__);
     fd = open(path, O_RDONLY);
