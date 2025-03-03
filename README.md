@@ -44,7 +44,7 @@ $ sudo make install
 
 &nbsp;
 
-## Motorola Photon Q (XT894)
+## Motorola Droid 4 (XT894)
 ```
 $ cd
 $ git clone https://github.com/steward-fu/sdl
