@@ -36,13 +36,13 @@
     #define debug(...) (void)0
 #endif
 
-uint8_t mykey[KEY_MAX][2] = {0};
-static int mymap[KEY_MAX] = {0};
+uint8_t mykey[KEY_MAX][2] = { 0 };
+static int mymap[KEY_MAX] = { 0 };
 
 void XT897_PumpEvents(_THIS)
 {
     int c0 = 0;
-    SDL_keysym keysym;
+    SDL_keysym keysym = { 0 };
 
     keysym.mod = KMOD_NONE;
     for (c0 = 0; c0 < KEY_MAX; c0++) {
