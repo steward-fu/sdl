@@ -38,11 +38,11 @@
 
 extern uint8_t mykey[KEY_MAX][2];
 
-static struct _wayland wl = {0};
+static struct _wayland wl = { 0 };
 static SDL_Surface *vsurf = NULL;
 
 int thread_run = 0;
-static pthread_t thread_id[3] = {0};
+static pthread_t thread_id[3] = { 0 };
 
 EGLint egl_attribs[] = {
     EGL_SURFACE_TYPE,
@@ -129,7 +129,7 @@ static void* wl_thread(void* pParam)
         if (wl.init && wl.ready) {
             wl_display_dispatch(wl.display);
         }
-        usleep(100);
+        usleep(1000);
     }
     debug("%s--\n", __func__);
     return NULL;
@@ -156,7 +156,7 @@ static void* keypad_thread(void* pParam)
                 debug("%s, code:%d, value:%d\n", __func__, ev.code, ev.value);
             }
         }
-        usleep(100);
+        usleep(1000);
     }
     close(fd);
     debug("%s--\n", __func__);
@@ -250,8 +250,10 @@ void wl_create(void)
 
 void egl_create(void)
 {
+    EGLint cnt = 0;
+    EGLint major = 0;
+    EGLint minor = 0;
     EGLConfig cfg = 0;
-    EGLint major = 0, minor = 0, cnt = 0;
 
     wl.egl.display = eglGetDisplay((EGLNativeDisplayType)wl.display);
     eglInitialize(wl.egl.display, &major, &minor);
