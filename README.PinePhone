@@ -1,8 +1,8 @@
-Porting libSDL-1.2 to PinePhone smartphone.
+SDL v1.2 for PINE64 PinePhone smartphone.
 
-Here is the configuration:
-$ ./configure --enable-video-pinephone --disable-video-x11 --build=arm-linux
+How to build the source code:
+$ ./autogen.sh
+$ ./configure --enable-video-pinephone --build=arm-linux
 
-
-10/06/2024
+03/08/2025
 Steward Fu

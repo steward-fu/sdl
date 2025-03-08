@@ -1,8 +1,8 @@
-Porting libSDL-1.2 to Motorola XT897 smartphone.
+SDL v1.2 for Motorola Photon Q (XT897) smartphone.
 
-Here is the configuration:
-$ ./configure --enable-video-xt897 --disable-video-x11 --build=arm-linux
+How to build the source code:
+$ ./autogen.sh
+$ ./configure --enable-video-xt897 --build=arm-linux
 
-
-02/28/2025
+03/08/2025
 Steward Fu

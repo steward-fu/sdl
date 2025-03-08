@@ -37,7 +37,7 @@ $ cd
 $ git clone https://github.com/steward-fu/sdl
 $ cd sdl
 $ ./autogen.sh
-$ ./configure --enable-video-xt897 --disable-video-x11 --build=arm-linux
+$ ./configure --enable-video-xt897 --build=arm-linux
 $ make -j4
 $ sudo make install
 ```
@@ -50,7 +50,7 @@ $ cd
 $ git clone https://github.com/steward-fu/sdl
 $ cd sdl
 $ ./autogen.sh
-$ ./configure --enable-video-xt894 --disable-video-x11 --build=arm-linux
+$ ./configure --enable-video-xt894 --build=arm-linux
 $ make -j4
 $ sudo make install
 ```
@@ -63,7 +63,7 @@ $ cd
 $ git clone https://github.com/steward-fu/sdl
 $ cd sdl
 $ ./autogen.sh
-$ ./configure --enable-video-qx1000 --disable-video-x11 --build=arm-linux
+$ ./configure --enable-video-qx1000 --build=arm-linux
 $ make -j4
 $ sudo make install
 ```

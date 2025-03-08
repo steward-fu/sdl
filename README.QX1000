@@ -1,8 +1,8 @@
-Porting libSDL-1.2 to QX1000 smartphone.
+SDL v1.2 for F(x)tec Pro1 (QX1000) smartphone.
 
-Here is the configuration:
-$ ./configure --enable-video-qx1000 --disable-video-x11 --build=arm-linux
+How to build the source code:
+$ ./autogen.sh
+$ ./configure --enable-video-qx1000 --build=arm-linux
 
-
-05/12/2024
+03/08/2025
 Steward Fu
