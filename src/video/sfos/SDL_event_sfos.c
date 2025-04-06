@@ -96,7 +96,7 @@ void SFOS_InitOSKeymap(_THIS)
     mymap[KEY_Z]          = SDLK_z;
 
     mymap[KEY_ESC]        = SDLK_ESCAPE;
-    mymap[KEY_SPACE]      = SDLK_HOME;
+    mymap[KEY_SPACE]      = SDLK_SPACE;
     mymap[KEY_CAPSLOCK]   = SDLK_CAPSLOCK;
     mymap[KEY_BACKSPACE]  = SDLK_BACKSPACE;
     mymap[KEY_TAB]        = SDLK_TAB;

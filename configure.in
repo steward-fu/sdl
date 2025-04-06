@@ -965,6 +965,24 @@ CheckSFOS()
         AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
         EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS_QX1050"
     fi
+
+    AC_ARG_ENABLE(video-sfos-xt897,
+        AS_HELP_STRING([--enable-video-sfos-xt897],[apply Motorola Photon Q (XT897) settings for Sailfish OS [[default=no]]]),
+        , enable_video_sfos_xt897=no)
+
+    if test x$enable_video_sfos_xt897 = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS_XT897"
+    fi
+
+    AC_ARG_ENABLE(video-sfos-xt894,
+        AS_HELP_STRING([--enable-video-sfos-xt894],[apply Motorola Droid 4 (XT894) settings for Sailfish OS [[default=no]]]),
+        , enable_video_sfos_xt894=no)
+
+    if test x$enable_video_sfos_xt894 = xyes; then
+        AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS_XT894"
+    fi
 }
 
 CheckA30()
