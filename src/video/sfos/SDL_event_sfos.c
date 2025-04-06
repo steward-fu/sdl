@@ -1,21 +1,9 @@
-/*
-    SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2012 Sam Lantinga
+// LGPL-2.1 License
+// (C) 2025 Steward Fu <steward.fu@gmail.com>
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
+#include "SDL_config.h"
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+#if SDL_VIDEO_DRIVER_SFOS
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,21 +13,21 @@
 
 #include "SDL_config.h"
 #include "SDL.h"
-#include "SDL_qxvideo.h"
-#include "SDL_qxevent.h"
+#include "SDL_video_sfos.h"
+#include "SDL_event_sfos.h"
 #include "../../events/SDL_sysevents.h"
 #include "../../events/SDL_events_c.h"
 
-#if 0
+#if SFOS_DEBUG
     #define debug(...) printf(__VA_ARGS__)
 #else
     #define debug(...) (void)0
 #endif
 
-uint8_t mykey[KEY_MAX][2] = {0};
-static int mymap[KEY_MAX] = {0};
+uint8_t mykey[KEY_MAX][2] = { 0 };
+static int mymap[KEY_MAX] = { 0 };
 
-void QX1000_PumpEvents(_THIS)
+void SFOS_PumpEvents(_THIS)
 {
     int c0 = 0;
     SDL_keysym keysym;
@@ -62,7 +50,7 @@ void QX1000_PumpEvents(_THIS)
     }
 }
 
-void QX1000_InitOSKeymap(_THIS)
+void SFOS_InitOSKeymap(_THIS)
 {
     mymap[KEY_0]          = SDLK_0;
     mymap[KEY_1]          = SDLK_1;
@@ -138,4 +126,6 @@ void QX1000_InitOSKeymap(_THIS)
     mymap[KEY_RIGHTALT]   = SDLK_RALT;
     mymap[KEY_LEFTALT]    = SDLK_LALT;
 }
+
+#endif
 

@@ -87,20 +87,8 @@ int SDL_InitSubSystem(Uint32 flags)
 	SDL_putenv("SDL_VIDEODRIVER=a30");
 #endif
 
-#if SDL_VIDEO_DRIVER_QX1000
-	SDL_putenv("SDL_VIDEODRIVER=qx1000");
-#endif
-
-#if SDL_VIDEO_DRIVER_XT894
-	SDL_putenv("SDL_VIDEODRIVER=xt894");
-#endif
-
-#if SDL_VIDEO_DRIVER_XT897
-	SDL_putenv("SDL_VIDEODRIVER=xt897");
-#endif
-
-#if SDL_VIDEO_DRIVER_PINEPHONE
-	SDL_putenv("SDL_VIDEODRIVER=pinephone");
+#if SDL_VIDEO_DRIVER_SFOS
+	SDL_putenv("SDL_VIDEODRIVER=sfos");
 #endif
 
 #if !SDL_VIDEO_DISABLED

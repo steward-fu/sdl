@@ -132,17 +132,8 @@ static VideoBootStrap *bootstrap[] = {
 #if SDL_VIDEO_DRIVER_A30
 	&A30_bootstrap,
 #endif
-#if SDL_VIDEO_DRIVER_QX1000
-	&QX1000_bootstrap,
-#endif
-#if SDL_VIDEO_DRIVER_XT894
-	&XT894_bootstrap,
-#endif
-#if SDL_VIDEO_DRIVER_XT897
-	&XT897_bootstrap,
-#endif
-#if SDL_VIDEO_DRIVER_PINEPHONE
-	&PinePhone_bootstrap,
+#if SDL_VIDEO_DRIVER_SFOS
+	&SFOS_bootstrap,
 #endif
 	NULL
 };

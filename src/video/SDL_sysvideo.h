@@ -416,17 +416,8 @@ extern VideoBootStrap DUMMY_bootstrap;
 #if SDL_VIDEO_DRIVER_A30
 extern VideoBootStrap A30_bootstrap;
 #endif
-#if SDL_VIDEO_DRIVER_QX1000
-extern VideoBootStrap QX1000_bootstrap;
-#endif
-#if SDL_VIDEO_DRIVER_XT894
-extern VideoBootStrap XT894_bootstrap;
-#endif
-#if SDL_VIDEO_DRIVER_XT897
-extern VideoBootStrap XT897_bootstrap;
-#endif
-#if SDL_VIDEO_DRIVER_PINEPHONE
-extern VideoBootStrap PinePhone_bootstrap;
+#if SDL_VIDEO_DRIVER_SFOS
+extern VideoBootStrap SFOS_bootstrap;
 #endif
 
 /* This is the current video device */

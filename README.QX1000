@@ -2,7 +2,7 @@ SDL v1.2 for F(x)tec Pro1 (QX1000) smartphone.
 
 How to build the source code:
 $ ./autogen.sh
-$ ./configure --enable-video-qx1000 --build=arm-linux
+$ ./configure --enable-video-sfos --enable-video-sfos-qx1000 --build=arm-linux
 
-03/08/2025
+04/04/2025
 Steward Fu
