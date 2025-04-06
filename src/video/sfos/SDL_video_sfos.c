@@ -199,9 +199,12 @@ void egl_free(void)
     eglDestroyContext(wl.egl.display, wl.egl.context);
     wl_egl_window_destroy(wl.window);
     eglTerminate(wl.egl.display);
+
+#if !defined(SFOS_XT894) && !defined(SFOS_XT897)
     glDeleteShader(wl.egl.vert_shader);
     glDeleteShader(wl.egl.frag_shader);
     glDeleteProgram(wl.egl.prog_obj);
+#endif
 }
 
 void wl_free(void)
@@ -314,6 +317,8 @@ void egl_create(void)
     glBindTexture(GL_TEXTURE_2D, wl.egl.tex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glViewport(0, 0, LCD_W, LCD_H);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

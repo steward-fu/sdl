@@ -38,10 +38,16 @@
 #define DEV_PATH    "/dev/input/event3"
 #endif
 
-#if defined(SFOS_XT894) || defined(SFOS_XT897)
+#if defined(SFOS_XT897)
 #define LCD_W       540
 #define LCD_H       960
 #define DEV_PATH    "/dev/input/event1"
+#endif
+
+#if defined(SFOS_XT894)
+#define LCD_W       540
+#define LCD_H       960
+#define DEV_PATH    "/dev/input/event3"
 #endif
 
 typedef struct {
