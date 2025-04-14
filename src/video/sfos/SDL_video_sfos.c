@@ -217,7 +217,10 @@ void wl_free(void)
     wl_compositor_destroy(wl.compositor);
     wl_registry_destroy(wl.registry);
     wl_display_disconnect(wl.display);
+    free(wl.bg);
+    wl.bg = NULL;
     free(wl.data);
+    wl.data = NULL;
 }
 
 void wl_create(void)
@@ -245,6 +248,12 @@ void wl_create(void)
     debug("%s, wl.shell=%p\n", __func__, wl.shell);
     debug("%s, wl.shell_surface=%p\n", __func__, wl.shell_surface);
     debug("%s, wl.region=%p\n", __func__, wl.region);
+
+    wl.data = SDL_malloc(LCD_W * LCD_H * 4);
+    memset(wl.data, 0, LCD_W * LCD_H * 4);
+
+    wl.bg = SDL_malloc(LCD_W * LCD_H * 2);
+    memset(wl.bg, 0, LCD_W * LCD_H * 2);
 }
 
 void egl_create(void)
@@ -381,7 +390,6 @@ static void SFOS_DeleteDevice(SDL_VideoDevice* device)
         pthread_join(wl.thread.id[2], NULL);
         egl_free();
         wl_free();
-        free(wl.bg);
     }
 
     if (device) {
@@ -414,8 +422,6 @@ static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
     debug("%s\n", __func__);
 
     wl.thread.running = 1;
-    wl.bg = SDL_malloc(LCD_W * LCD_H * 2);
-    memset(wl.bg, 0, LCD_W * LCD_H * 2);
     pthread_create(&wl.thread.id[0], NULL, display_handler, NULL);
     pthread_create(&wl.thread.id[1], NULL, input_handler, NULL);
     pthread_create(&wl.thread.id[2], NULL, draw_handler, NULL);
@@ -461,13 +467,12 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int width, in
     fb_vertices[11] = -y0;
     fb_vertices[15] =  x0;
     fb_vertices[16] =  y0;
-   
+
     // double buffer
     wl.flip = 0;
-    wl.data = SDL_malloc(wl.info.size * 2);
-    memset(wl.data, 0, wl.info.size *2);
-    wl.pixels[0] = (uint16_t*)wl.data;
-    wl.pixels[1] = (uint16_t*)(wl.data + wl.info.size);
+    memset(wl.data, 0, wl.info.size * 2);
+    wl.pixels[0] = (uint16_t *)wl.data;
+    wl.pixels[1] = (uint16_t *)(wl.data + wl.info.size);
     debug("%s, pixels:%p\n", __func__, wl.data);
 
 	if (!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
