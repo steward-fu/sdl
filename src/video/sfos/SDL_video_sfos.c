@@ -24,7 +24,13 @@
 
 extern uint8_t mykey[KEY_MAX][2];
 
+typedef enum {
+    FILTER_PIXEL = 0,
+    FILTER_BLUR
+} sfos_filter_t;
+
 static wayland wl = { 0 };
+static sfos_filter_t filter = 0;
 static SDL_Surface *vsurf = NULL;
 
 EGLint surf_cfg[] = {
@@ -324,8 +330,15 @@ void egl_create(void)
 
     glGenTextures(1, &wl.egl.tex);
     glBindTexture(GL_TEXTURE_2D, wl.egl.tex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    if (filter == FILTER_PIXEL) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+    else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -419,7 +432,17 @@ static SDL_Rect** SFOS_ListModes(_THIS, SDL_PixelFormat* format, Uint32 flags)
 
 static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
 {
+    const char *var = NULL;
+
     debug("%s\n", __func__);
+
+    var = getenv("SFOS_FILTER");
+    if (var && !strcmp(var, "BLUR")) {
+        filter = FILTER_BLUR;
+    }
+    else {
+        filter = FILTER_PIXEL;
+    }
 
     wl.thread.running = 1;
     pthread_create(&wl.thread.id[0], NULL, display_handler, NULL);
@@ -450,9 +473,16 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int width, in
     wl.info.size = wl.info.w * (wl.info.bpp / 8) * wl.info.h;
     debug("%s, w:%d, h:%d, bpp:%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
 
-    int c0 = LCD_H / wl.info.w;
-    int c1 = LCD_W / wl.info.h;
-    int scale = c0 > c1 ? c1 : c0;
+    float c0 = (float)LCD_H / wl.info.w;
+    float c1 = (float)LCD_W / wl.info.h;
+    float scale = c0 > c1 ? c1 : c0;
+
+    if (filter == FILTER_PIXEL) {
+        scale = (int)scale;
+    }
+    if (scale <= 0) {
+        scale = 1;
+    }
     debug("%s, scale:%d\n", __func__, scale);
 
     float y0 = ((float)(wl.info.w * scale) / LCD_H);
