@@ -12,6 +12,8 @@
 #include "SDL_video_sfos.h"
 #include "SDL_event_sfos.h"
 
+#include "border.h"
+
 #include "../SDL_sysvideo.h"
 #include "../SDL_pixels_c.h"
 #include "../../events/SDL_events_c.h"
@@ -258,8 +260,8 @@ void wl_create(void)
     wl.data = SDL_malloc(LCD_W * LCD_H * 4);
     memset(wl.data, 0, LCD_W * LCD_H * 4);
 
-    wl.bg = SDL_malloc(LCD_W * LCD_H * 2);
-    memset(wl.bg, 0, LCD_W * LCD_H * 2);
+    wl.bg = SDL_malloc(sizeof(hex_border));
+    memcpy(wl.bg, hex_border, sizeof(hex_border));
 }
 
 void egl_create(void)
@@ -369,7 +371,7 @@ static void* draw_handler(void* pParam)
         if (wl.ready) {
             glVertexAttribPointer(wl.egl.pos, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), bg_vertices);
             glVertexAttribPointer(wl.egl.coord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &bg_vertices[3]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, wl.info.w, wl.info.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, LCD_H, LCD_W, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
             glVertexAttribPointer(wl.egl.pos, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), fb_vertices);
