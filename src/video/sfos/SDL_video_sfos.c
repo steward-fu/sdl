@@ -12,7 +12,7 @@
 #include "SDL_video_sfos.h"
 #include "SDL_event_sfos.h"
 
-#include "border.h"
+#include <SDL_image.h>
 
 #include "../SDL_sysvideo.h"
 #include "../SDL_pixels_c.h"
@@ -22,6 +22,10 @@
     #define debug(...) printf("[SDL] "__VA_ARGS__)
 #else
     #define debug(...) (void)0
+#endif
+
+#if defined(SFOS_XT897)
+    #define BG_HOME "/home/nemo/Data/sdl/border"
 #endif
 
 extern uint8_t mykey[KEY_MAX][2];
@@ -153,8 +157,12 @@ static void* display_handler(void* pParam)
 static void* input_handler(void* pParam)
 {
     int fd = -1;
+    int bg_idx = 0;
+    int bg_needs_init = 1;
+    char buf[255] = { 0 };
     struct input_event ev = { 0 };
     const char *path = DEV_PATH;
+    SDL_Surface *cvt = NULL;
 
     debug("%s++\n", __func__);
 
@@ -165,16 +173,41 @@ static void* input_handler(void* pParam)
     }
 
     fcntl(fd, F_SETFL, O_NONBLOCK);
+    cvt = SDL_CreateRGBSurface(SDL_SWSURFACE, 128, 128, 16, 0, 0, 0, 0);
     while (wl.thread.running) {
         if (read(fd, &ev, sizeof(struct input_event)) > 0) {
             if (ev.type == EV_KEY) {
                 mykey[ev.code][ev.value] = 1;
                 debug("%s, code:%d, value:%d\n", __func__, ev.code, ev.value);
+
+                if (bg_needs_init || (ev.code == KEY_CAMERA) && (ev.value == 1)) {
+                    bg_needs_init = 0;
+                    snprintf(buf, sizeof(buf), BG_HOME "/%d.png", bg_idx++);
+                    if (access(buf, F_OK) != 0) {
+                        bg_idx = 0;
+                        snprintf(buf, sizeof(buf), BG_HOME "/%d.png", bg_idx);
+                    }
+
+                    debug("use bg image \'%s\'\n", buf);
+                    SDL_Surface *png = IMG_Load(buf);
+                    if (png) {
+                        SDL_Surface *t = SDL_ConvertSurface(png, cvt->format, 0);
+                        if (t) {
+                            memcpy(wl.bg, t->pixels, t->w * t->h * 2);
+                            SDL_FreeSurface(t);
+                        }
+                        SDL_FreeSurface(png);
+                    }
+                }
             }
         }
         usleep(1000);
     }
     close(fd);
+
+    if (cvt) {
+        SDL_FreeSurface(cvt);
+    }
 
     debug("%s--\n", __func__);
     return NULL;
@@ -260,8 +293,8 @@ void wl_create(void)
     wl.data = SDL_malloc(LCD_W * LCD_H * 4);
     memset(wl.data, 0, LCD_W * LCD_H * 4);
 
-    wl.bg = SDL_malloc(sizeof(hex_border));
-    memcpy(wl.bg, hex_border, sizeof(hex_border));
+    wl.bg = SDL_malloc(LCD_W * LCD_H * 2);
+    memset(wl.bg, 0, LCD_W * LCD_H * 2);
 }
 
 void egl_create(void)
