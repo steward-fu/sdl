@@ -28,6 +28,10 @@
     #define BG_HOME "/home/nemo/Data/sdl/border"
 #endif
 
+#if defined(SFOS_XT894)
+    #define BG_HOME "/home/defaultuser/Data/sdl/border"
+#endif
+
 extern uint8_t mykey[KEY_MAX][2];
 
 typedef enum {
@@ -180,7 +184,10 @@ static void* input_handler(void* pParam)
                 mykey[ev.code][ev.value] = 1;
                 debug("%s, code:%d, value:%d\n", __func__, ev.code, ev.value);
 
-                if (bg_needs_init || (ev.code == KEY_CAMERA) && (ev.value == 1)) {
+                if (bg_needs_init ||
+                    ((ev.code == KEY_RIGHTCTRL) && (ev.value == 1)) ||
+                    ((ev.code == KEY_CAMERA) && (ev.value == 1)))
+                {
                     bg_needs_init = 0;
                     snprintf(buf, sizeof(buf), BG_HOME "/%d.png", bg_idx++);
                     if (access(buf, F_OK) != 0) {
