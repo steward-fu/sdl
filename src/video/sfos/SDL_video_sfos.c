@@ -28,7 +28,7 @@
     #define BG_HOME "/home/nemo/Data/sdl/border"
 #endif
 
-#if defined(SFOS_XT894)
+#if defined(SFOS_XT894) || defined(SFOS_QX1000)
     #define BG_HOME "/home/defaultuser/Data/sdl/border"
 #endif
 
@@ -65,12 +65,23 @@ EGLint ctx_cfg[] = {
     EGL_NONE
 };
 
+#if defined(SFOS_XT897) || defined(SFOS_XT894)
 GLfloat bg_vertices[] = {
     -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 
     -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
      1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 
      1.0f,  1.0f, 0.0f, 1.0f, 0.0f
 };
+#endif
+
+#if defined(SFOS_QX1000)
+GLfloat bg_vertices[] = {
+    -1.0f,  0.889f, 0.0f, 0.0f, 0.0f,
+    -1.0f, -0.889f, 0.0f, 0.0f, 1.0f,
+     1.0f, -0.889f, 0.0f, 1.0f, 1.0f,
+     1.0f,  0.889f, 0.0f, 1.0f, 0.0f
+};
+#endif
 
 GLfloat fb_vertices[] = {
     -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 
@@ -186,6 +197,7 @@ static void* input_handler(void* pParam)
 
                 if (bg_needs_init ||
                     ((ev.code == KEY_RIGHTCTRL) && (ev.value == 1)) ||
+                    ((ev.code == KEY_RIGHTSHIFT) && (ev.value == 1)) ||
                     ((ev.code == KEY_CAMERA) && (ev.value == 1)))
                 {
                     bg_needs_init = 0;
@@ -411,7 +423,7 @@ static void* draw_handler(void* pParam)
         if (wl.ready) {
             glVertexAttribPointer(wl.egl.pos, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), bg_vertices);
             glVertexAttribPointer(wl.egl.coord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &bg_vertices[3]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, LCD_H, LCD_W, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 960, 540, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
             glVertexAttribPointer(wl.egl.pos, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), fb_vertices);
