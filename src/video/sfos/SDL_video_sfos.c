@@ -196,6 +196,7 @@ static void* input_handler(void* pParam)
                 debug("%s, code:%d, value:%d\n", __func__, ev.code, ev.value);
 
                 if (bg_needs_init ||
+                    ((ev.code == KEY_LEFTCTRL) && (ev.value == 1)) ||
                     ((ev.code == KEY_RIGHTCTRL) && (ev.value == 1)) ||
                     ((ev.code == KEY_RIGHTSHIFT) && (ev.value == 1)) ||
                     ((ev.code == KEY_CAMERA) && (ev.value == 1)))
