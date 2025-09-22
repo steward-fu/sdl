@@ -2,7 +2,7 @@ SDL v1.2 for Motorola Droid 4 (XT894) smartphone.
 
 How to build the source code:
 $ ./autogen.sh
-$ ./configure --enable-video-sfos --enable-video-sfos-xt894 --build=arm-linux
+$ ./configure --enable-video-sfos --enable-video-sfos-xt894 --disable-video-x11 --build=arm-linux
 
 04/06/2025
 Steward Fu
