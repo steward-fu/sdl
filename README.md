@@ -2,11 +2,11 @@
 This repository contains the SDL v1.2 source code, ported for the following handheld devices:  
 - F(x)tec Pro1 (QX1000)  
   Utilizes Wayland Client for rendering and is only supported on Sailfish OS v4.4.0.72.
-- Motorola Photon Q (XT897)  
-  Utilizes Wayland Client for rendering and is only supported on Sailfish OS v4.4.0.68.
 - Motorola Droid 4 (XT894)  
   Utilizes Wayland Client for rendering and is only supported on Sailfish OS v4.6.0.15.
-  
+- Motorola Photon Q (XT897)  
+  Utilizes Wayland Client for rendering and is only supported on Sailfish OS v4.4.0.68.
+
 All dependent libraries are stored in the "dependency" folder and need be built manually after building the SDL library.
 ```
 smpeg-0.4.5.tar.gz
