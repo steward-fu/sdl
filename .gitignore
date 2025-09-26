@@ -1,6 +1,8 @@
 aclocal.m4
 sdl.pc
 configure
+configure~
+test/configure~
 test/configure
 include/SDL_config.h
 	
