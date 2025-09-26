@@ -2,3 +2,14 @@ aclocal.m4
 sdl.pc
 configure
 test/configure
+include/SDL_config.h
+	
+Makefile
+SDL.qpg
+autom4te.cache/
+build-deps
+build/
+config.log
+config.status
+libtool
+sdl-config
