@@ -105,7 +105,11 @@ static const char *vert_shader_code =
     "}                                                                  \n";
 
 static const char *frag_shader_code =
+#if defined(XT894)
     "precision mediump float;                                           \n"
+#else
+    "precision highp float;                                             \n"
+#endif
     "varying vec2 frag_coord;                                           \n"
     "uniform int frag_swap_color;                                       \n"
     "uniform float frag_aspect;                                         \n"
