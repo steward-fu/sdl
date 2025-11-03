@@ -144,7 +144,7 @@ if test x$enable_libc = xyes; then
   C89 headers unconditionally.])dnl
 # Autoupdate added the next two lines to ensure that your configure
 # script's behavior did not change.  They are probably safe to remove.
-AC_CHECK_INCLUDES_DEFAULT
+# AC_CHECK_INCLUDES_DEFAULT
 AC_PROG_EGREP
 
     AC_CHECK_HEADERS(sys/types.h stdio.h stdlib.h stddef.h stdarg.h malloc.h memory.h string.h strings.h inttypes.h stdint.h ctype.h math.h iconv.h signal.h)
@@ -936,71 +936,56 @@ AS_HELP_STRING([--enable-ipod],[configure SDL to work with iPodLinux [[default=n
 
 CheckSFOS()
 {
-    AC_ARG_ENABLE(video-sfos,
-        AS_HELP_STRING([--enable-video-sfos],[use video driver for Sailfish OS [[default=no]]]),
-        , enable_video_sfos=no)
+    AC_ARG_ENABLE(xt894,
+        AS_HELP_STRING([--enable-xt894],[support Motorola Droid 4 (XT894) [[default=no]]]),
+        , enable_xt894=no)
 
-    if test x$enable_video_sfos = xyes; then
+    if test x$enable_xt894 = xyes; then
+        AC_DEFINE(SDL_VIDEO_XT894)
         AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
         SOURCES="$SOURCES $srcdir/src/video/sfos/*.c"
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS"
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT894 -I/usr/local/include/SDL"
         EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2 -lSDL_image"
         have_video=no
     fi
 
-    AC_ARG_ENABLE(video-sfos-qx1000,
-        AS_HELP_STRING([--enable-video-sfos-qx1000],[apply F(x)tec Pro1 (QX1000) settings for Sailfish OS [[default=no]]]),
-        , enable_video_sfos_qx1000=no)
+    AC_ARG_ENABLE(xt897,
+        AS_HELP_STRING([--enable-xt897],[support Motorola Photon Q (XT897) [[default=no]]]),
+        , enable_xt897=no)
 
-    if test x$enable_video_sfos_qx1000 = xyes; then
+    if test x$enable_xt897 = xyes; then
+        AC_DEFINE(SDL_VIDEO_XT897)
         AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS_QX1000 -I/usr/local/include/SDL"
-    fi
-
-    AC_ARG_ENABLE(video-sfos-qx1050,
-        AS_HELP_STRING([--enable-video-sfos-qx1050],[apply F(x)tec Pro1-X (QX1050) settings for Sailfish OS [[default=no]]]),
-        , enable_video_sfos_qx1050=no)
-
-    if test x$enable_video_sfos_qx1050 = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS_QX1050 -I/usr/local/include/SDL"
-    fi
-
-    AC_ARG_ENABLE(video-sfos-xt897,
-        AS_HELP_STRING([--enable-video-sfos-xt897],[apply Motorola Photon Q (XT897) settings for Sailfish OS [[default=no]]]),
-        , enable_video_sfos_xt897=no)
-
-    if test x$enable_video_sfos_xt897 = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS_XT897 -I/usr/local/include/SDL"
-    fi
-
-    AC_ARG_ENABLE(video-sfos-xt894,
-        AS_HELP_STRING([--enable-video-sfos-xt894],[apply Motorola Droid 4 (XT894) settings for Sailfish OS [[default=no]]]),
-        , enable_video_sfos_xt894=no)
-
-    if test x$enable_video_sfos_xt894 = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
-        EXTRA_CFLAGS="$EXTRA_CFLAGS -DSFOS_XT894 -I/usr/local/include/SDL"
-    fi
-}
-
-CheckA30()
-{
-    AC_ARG_ENABLE(video-a30,
-        AS_HELP_STRING([--enable-video-a30],[use Miyoo A30 video driver [[default=no]]]),
-        , enable_video_a30=no)
-
-    if test x$enable_video_a30 = xyes; then
-        AC_DEFINE(SDL_VIDEO_DRIVER_A30)
-        AC_DEFINE(SDL_JOYSTICK_DRIVER_A30)
-        SOURCES="$SOURCES $srcdir/src/video/a30/*.c"
-        SOURCES="$SOURCES $srcdir/src/joystick/a30/*.c"
-        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lEGL -lGLESv2"
+        SOURCES="$SOURCES $srcdir/src/video/sfos/*.c"
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DXT897 -I/usr/local/include/SDL"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2 -lSDL_image"
         have_video=no
-        have_joystick=no
-        enable_joystick=no
-        ARCH=a30
+    fi
+
+    AC_ARG_ENABLE(qx1000,
+        AS_HELP_STRING([--enable-qx1000],[support F(x)tec Pro1 (QX1000) [[default=no]]]),
+        , enable_qx1000=no)
+
+    if test x$enable_qx1000 = xyes; then
+        AC_DEFINE(SDL_VIDEO_QX1000)
+        AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
+        SOURCES="$SOURCES $srcdir/src/video/sfos/*.c"
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DQX1000 -I/usr/local/include/SDL"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2 -lSDL_image"
+        have_video=no
+    fi
+
+    AC_ARG_ENABLE(qx1050,
+        AS_HELP_STRING([--enable-qx1050],[support F(x)tec Pro1-X (QX1050) [[default=no]]]),
+        , enable_qx1050=no)
+
+    if test x$enable_qx1050 = xyes; then
+        AC_DEFINE(SDL_VIDEO_QX1050)
+        AC_DEFINE(SDL_VIDEO_DRIVER_SFOS)
+        SOURCES="$SOURCES $srcdir/src/video/sfos/*.c"
+        EXTRA_CFLAGS="$EXTRA_CFLAGS -DQX1050 -I/usr/local/include/SDL"
+        EXTRA_LDFLAGS="$EXTRA_LDFLAGS -lwayland-client -lwayland-egl -lEGL -lGLESv2 -lSDL_image"
+        have_video=no
     fi
 }
 
@@ -2441,7 +2426,6 @@ case "$host" in
         CheckNAS
         CheckX11
         CheckNANOX
-        CheckA30
         CheckSFOS
         CheckFBCON
         CheckDirectFB

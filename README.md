@@ -18,29 +18,29 @@ sdl-1.2-image-1.2.12.tar.gz
 sdl-1.2-mixer-1.2.12.tar.gz
 ```
 
-## Motorola Photon Q (XT897)
-```
-$ cd
-$ git clone https://github.com/steward-fu/sdl
-$ cd sdl
-$ ./autogen.sh
-$ ./configure --enable-video-sfos --enable-video-sfos-xt897 --build=arm-linux
-$ make -j4
-$ sudo make install
-```
-![image](image/xt897.jpg)  
-
 ## Motorola Droid 4 (XT894)
 ```
 $ cd
 $ git clone https://github.com/steward-fu/sdl
 $ cd sdl
 $ ./autogen.sh
-$ ./configure --enable-video-sfos --enable-video-sfos-xt894 --build=arm-linux
+$ ./configure --enable-xt894 --build=arm-linux
 $ make -j4
 $ sudo make install
 ```
 ![image](image/xt894.jpg)  
+
+## Motorola Photon Q (XT897)
+```
+$ cd
+$ git clone https://github.com/steward-fu/sdl
+$ cd sdl
+$ ./autogen.sh
+$ ./configure --enable-xt897 --build=arm-linux
+$ make -j4
+$ sudo make install
+```
+![image](image/xt897.jpg)  
 
 ## F(x)tec Pro1 (QX1000)
 ```
@@ -48,7 +48,7 @@ $ cd
 $ git clone https://github.com/steward-fu/sdl
 $ cd sdl
 $ ./autogen.sh
-$ ./configure --enable-video-sfos --enable-video-sfos-qx1000 --build=arm-linux
+$ ./configure --enable-qx1000 --build=arm-linux
 $ make -j4
 $ sudo make install
 ```

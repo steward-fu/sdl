@@ -5,8 +5,8 @@
 
 #if SDL_VIDEO_DRIVER_SFOS
 
-#ifndef __SDL_VIDEO_SFOS_H__
-#define __SDL_VIDEO_SFOS_H__
+#ifndef __SFOS_VIDEO_H__
+#define __SFOS_VIDEO_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,22 +29,22 @@
 
 #define _THIS SDL_VideoDevice *this
 
-#define SFOS_DEBUG  0
+#define DEBUG       0
 #define MAX_FB      2
 
-#if defined(SFOS_QX1000) || defined(SFOS_QX1050)
+#if defined(QX1000) || defined(QX1050)
 #define LCD_W       1080
 #define LCD_H       2160
 #define DEV_PATH    "/dev/input/event3"
 #endif
 
-#if defined(SFOS_XT897)
+#if defined(XT897)
 #define LCD_W       540
 #define LCD_H       960
 #define DEV_PATH    "/dev/input/event1"
 #endif
 
-#if defined(SFOS_XT894)
+#if defined(XT894)
 #define LCD_W       540
 #define LCD_H       960
 #define DEV_PATH    "/dev/input/event3"

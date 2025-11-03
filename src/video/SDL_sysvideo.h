@@ -413,9 +413,6 @@ extern VideoBootStrap CACA_bootstrap;
 #if SDL_VIDEO_DRIVER_DUMMY
 extern VideoBootStrap DUMMY_bootstrap;
 #endif
-#if SDL_VIDEO_DRIVER_A30
-extern VideoBootStrap A30_bootstrap;
-#endif
 #if SDL_VIDEO_DRIVER_SFOS
 extern VideoBootStrap SFOS_bootstrap;
 #endif

@@ -9,8 +9,8 @@
 #include "SDL_error.h"
 #include "SDL_video.h"
 #include "SDL_mouse.h"
-#include "SDL_video_sfos.h"
-#include "SDL_event_sfos.h"
+#include "sfos_video.h"
+#include "sfos_event.h"
 
 #include <SDL_image.h>
 
@@ -24,11 +24,11 @@
     #define debug(...) (void)0
 #endif
 
-#if defined(SFOS_XT897)
+#if defined(XT897)
     #define BG_HOME "/home/nemo/Data/sdl/border"
 #endif
 
-#if defined(SFOS_XT894) || defined(SFOS_QX1000)
+#if defined(XT894) || defined(QX1000)
     #define BG_HOME "/home/defaultuser/Data/sdl/border"
 #endif
 
@@ -65,7 +65,7 @@ EGLint ctx_cfg[] = {
     EGL_NONE
 };
 
-#if defined(SFOS_XT897) || defined(SFOS_XT894)
+#if defined(XT897) || defined(XT894)
 GLfloat bg_vertices[] = {
     -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 
     -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
@@ -74,7 +74,7 @@ GLfloat bg_vertices[] = {
 };
 #endif
 
-#if defined(SFOS_QX1000)
+#if defined(QX1000)
 GLfloat bg_vertices[] = {
     -1.0f,  0.889f, 0.0f, 0.0f, 0.0f,
     -1.0f, -0.889f, 0.0f, 0.0f, 1.0f,
@@ -152,7 +152,7 @@ static struct wl_registry_listener cb_global = {
     .global_remove = cb_remove
 };
 
-static void* display_handler(void* pParam)
+static void* disp_handler(void* pParam)
 {
     debug("%s++\n", __func__);
 
@@ -261,7 +261,7 @@ void egl_free(void)
     wl_egl_window_destroy(wl.window);
     eglTerminate(wl.egl.display);
 
-#if !defined(SFOS_XT894) && !defined(SFOS_XT897)
+#if !defined(XT894) && !defined(XT897)
     glDeleteShader(wl.egl.vert_shader);
     glDeleteShader(wl.egl.frag_shader);
     glDeleteProgram(wl.egl.prog_obj);
@@ -415,13 +415,16 @@ void egl_create(void)
 
 static void* draw_handler(void* pParam)
 {
+    int pre_flip = -1;
+
     debug("%s++\n", __func__);
     wl_create();
     egl_create();
 
     wl.init = 1;
     while (wl.thread.running) {
-        if (wl.ready) {
+        if (wl.ready && (pre_flip != wl.flip)) {
+            pre_flip = wl.flip;
             glVertexAttribPointer(wl.egl.pos, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), bg_vertices);
             glVertexAttribPointer(wl.egl.coord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &bg_vertices[3]);
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 960, 540, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
@@ -434,7 +437,7 @@ static void* draw_handler(void* pParam)
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
         }
         else {
-            usleep(1000);
+            usleep(10);
         }
     }
     return NULL;
@@ -500,7 +503,7 @@ static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
     }
 
     wl.thread.running = 1;
-    pthread_create(&wl.thread.id[0], NULL, display_handler, NULL);
+    pthread_create(&wl.thread.id[0], NULL, disp_handler, NULL);
     pthread_create(&wl.thread.id[1], NULL, input_handler, NULL);
     pthread_create(&wl.thread.id[2], NULL, draw_handler, NULL);
     while (wl.init == 0) {

@@ -13,12 +13,12 @@
 
 #include "SDL_config.h"
 #include "SDL.h"
-#include "SDL_video_sfos.h"
-#include "SDL_event_sfos.h"
+#include "sfos_video.h"
+#include "sfos_event.h"
 #include "../../events/SDL_sysevents.h"
 #include "../../events/SDL_events_c.h"
 
-#if SFOS_DEBUG
+#if DEBUG
     #define debug(...) printf(__VA_ARGS__)
 #else
     #define debug(...) (void)0

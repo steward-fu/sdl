@@ -5,10 +5,10 @@
 
 #if SDL_VIDEO_DRIVER_SFOS
 
-#ifndef __SDL_EVENT_SFOS_H__
-#define __SDL_EVENT_SFOS_H__
+#ifndef __SFOS_EVENT_H__
+#define __SFOS_EVENT_H__
 
-#include "SDL_video_sfos.h"
+#include "sfos_video.h"
 
 void SFOS_PumpEvents(_THIS);
 void SFOS_InitOSKeymap(_THIS);
