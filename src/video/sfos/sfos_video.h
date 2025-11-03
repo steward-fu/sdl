@@ -67,9 +67,7 @@ typedef struct {
         EGLSurface surface;
 
         GLuint tex;
-        GLuint vert_shader;
-        GLuint frag_shader;
-        GLuint prog_obj;
+        GLuint program;
 
         GLint pos;
         GLint coord;
@@ -82,7 +80,6 @@ typedef struct {
         int bpp;
         int size;
     } info;
-
 
     struct {
         int running;

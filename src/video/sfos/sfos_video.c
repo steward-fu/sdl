@@ -18,18 +18,10 @@
 #include "../SDL_pixels_c.h"
 #include "../../events/SDL_events_c.h"
 
-#if SFOS_DEBUG
+#if DEBUG
     #define debug(...) printf("[SDL] "__VA_ARGS__)
 #else
     #define debug(...) (void)0
-#endif
-
-#if defined(XT897)
-    #define BG_HOME "/home/nemo/Data/sdl/border"
-#endif
-
-#if defined(XT894) || defined(QX1000)
-    #define BG_HOME "/home/defaultuser/Data/sdl/border"
 #endif
 
 extern uint8_t mykey[KEY_MAX][2];
@@ -76,10 +68,10 @@ GLfloat bg_vertices[] = {
 
 #if defined(QX1000)
 GLfloat bg_vertices[] = {
-    -1.0f,  0.889f, 0.0f, 0.0f, 0.0f,
-    -1.0f, -0.889f, 0.0f, 0.0f, 1.0f,
-     1.0f, -0.889f, 0.0f, 1.0f, 1.0f,
-     1.0f,  0.889f, 0.0f, 1.0f, 0.0f
+    -1.0f,  1.0f, 0.0f, 0.0f, 0.0f,
+    -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+     1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+     1.0f,  1.0f, 0.0f, 1.0f, 0.0f
 };
 #endif
 
@@ -133,7 +125,12 @@ static const char *frag_shader_code =
     "    gl_FragColor = vec4(tex, 1.0);                                 \n"
     "}                                                                  \n";
 
-static void cb_handle(void* dat, struct wl_registry* reg, uint32_t id, const char* intf, uint32_t ver)
+static void cb_handle(
+    void* dat,
+    struct wl_registry* reg,
+    uint32_t id,
+    const char* intf,
+    uint32_t ver)
 {
     if (strcmp(intf, "wl_compositor") == 0) {
         wl.compositor = wl_registry_bind(reg, id, &wl_compositor_interface, 1);
@@ -161,7 +158,7 @@ static void* disp_handler(void* pParam)
             wl_display_dispatch(wl.display);
         }
         else {
-            usleep(1000);
+            usleep(100);
         }
     }
 
@@ -172,12 +169,9 @@ static void* disp_handler(void* pParam)
 static void* input_handler(void* pParam)
 {
     int fd = -1;
-    int bg_idx = 0;
-    int bg_needs_init = 1;
     char buf[255] = { 0 };
     struct input_event ev = { 0 };
     const char *path = DEV_PATH;
-    SDL_Surface *cvt = NULL;
 
     debug("%s++\n", __func__);
 
@@ -188,46 +182,16 @@ static void* input_handler(void* pParam)
     }
 
     fcntl(fd, F_SETFL, O_NONBLOCK);
-    cvt = SDL_CreateRGBSurface(SDL_SWSURFACE, 128, 128, 16, 0, 0, 0, 0);
     while (wl.thread.running) {
         if (read(fd, &ev, sizeof(struct input_event)) > 0) {
             if (ev.type == EV_KEY) {
                 mykey[ev.code][ev.value] = 1;
                 debug("%s, code:%d, value:%d\n", __func__, ev.code, ev.value);
-
-                if (bg_needs_init ||
-                    ((ev.code == KEY_LEFTCTRL) && (ev.value == 1)) ||
-                    ((ev.code == KEY_RIGHTCTRL) && (ev.value == 1)) ||
-                    ((ev.code == KEY_RIGHTSHIFT) && (ev.value == 1)) ||
-                    ((ev.code == KEY_CAMERA) && (ev.value == 1)))
-                {
-                    bg_needs_init = 0;
-                    snprintf(buf, sizeof(buf), BG_HOME "/%d.png", bg_idx++);
-                    if (access(buf, F_OK) != 0) {
-                        bg_idx = 0;
-                        snprintf(buf, sizeof(buf), BG_HOME "/%d.png", bg_idx);
-                    }
-
-                    debug("use bg image \'%s\'\n", buf);
-                    SDL_Surface *png = IMG_Load(buf);
-                    if (png) {
-                        SDL_Surface *t = SDL_ConvertSurface(png, cvt->format, 0);
-                        if (t) {
-                            memcpy(wl.bg, t->pixels, t->w * t->h * 2);
-                            SDL_FreeSurface(t);
-                        }
-                        SDL_FreeSurface(png);
-                    }
-                }
             }
         }
-        usleep(1000);
+        usleep(10000);
     }
     close(fd);
-
-    if (cvt) {
-        SDL_FreeSurface(cvt);
-    }
 
     debug("%s--\n", __func__);
     return NULL;
@@ -238,7 +202,12 @@ static void cb_ping(void* dat, struct wl_shell_surface* shell_surf, uint32_t ser
     wl_shell_surface_pong(shell_surf, serial);
 }
 
-static void cb_configure(void* dat, struct wl_shell_surface* shell_surf, uint32_t edges, int32_t w, int32_t h)
+static void cb_configure(
+    void* dat,
+    struct wl_shell_surface* shell_surf,
+    uint32_t edges,
+    int32_t w,
+    int32_t h)
 {
 }
 
@@ -256,15 +225,14 @@ void egl_free(void)
 {
     wl.init = 0;
     wl.ready = 0;
+
     eglDestroySurface(wl.egl.display, wl.egl.surface);
     eglDestroyContext(wl.egl.display, wl.egl.context);
-    wl_egl_window_destroy(wl.window);
     eglTerminate(wl.egl.display);
 
-#if !defined(XT894) && !defined(XT897)
-    glDeleteShader(wl.egl.vert_shader);
-    glDeleteShader(wl.egl.frag_shader);
-    glDeleteProgram(wl.egl.prog_obj);
+#if defined(QX1000) || defined(QX1050)
+    glUseProgram(0);
+    glDeleteProgram(wl.egl.program);
 #endif
 }
 
@@ -272,12 +240,15 @@ void wl_free(void)
 {
     wl.init = 0;
     wl.ready = 0;
+
     wl_shell_surface_destroy(wl.shell_surface);
     wl_shell_destroy(wl.shell);
     wl_surface_destroy(wl.surface);
     wl_compositor_destroy(wl.compositor);
     wl_registry_destroy(wl.registry);
+    wl_egl_window_destroy(wl.window);
     wl_display_disconnect(wl.display);
+
     free(wl.bg);
     wl.bg = NULL;
     free(wl.data);
@@ -323,6 +294,8 @@ void egl_create(void)
     EGLint major = 0;
     EGLint minor = 0;
     EGLConfig cfg = 0;
+    GLint frag_shader = 0;
+    GLint vert_shader = 0;
 
     wl.egl.display = eglGetDisplay((EGLNativeDisplayType)wl.display);
     eglInitialize(wl.egl.display, &major, &minor);
@@ -337,50 +310,52 @@ void egl_create(void)
     debug("%s, egl_surface=%p\n", __func__, wl.egl.surface);
     debug("%s, egl_context=%p\n", __func__, wl.egl.context);
 
-    wl.egl.vert_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(wl.egl.vert_shader, 1, &vert_shader_code, NULL);
-    glCompileShader(wl.egl.vert_shader);
+    vert_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vert_shader, 1, &vert_shader_code, NULL);
+    glCompileShader(vert_shader);
 
     GLint compiled = 0;
-    glGetShaderiv(wl.egl.vert_shader, GL_COMPILE_STATUS, &compiled);
+    glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &compiled);
     if (!compiled) {
         GLint len = 0;
-        glGetShaderiv(wl.egl.vert_shader, GL_INFO_LOG_LENGTH, &len);
+        glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &len);
         if (len > 1) {
             char* info = malloc(sizeof(char) * len);
-            glGetShaderInfoLog(wl.egl.vert_shader, len, NULL, info);
+            glGetShaderInfoLog(vert_shader, len, NULL, info);
             debug("%s, failed to compile vert_shader: %s\n", __func__, info);
             free(info);
         }
     }
 
-    wl.egl.frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(wl.egl.frag_shader, 1, &frag_shader_code, NULL);
-    glCompileShader(wl.egl.frag_shader);
+    frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(frag_shader, 1, &frag_shader_code, NULL);
+    glCompileShader(frag_shader);
     
-    glGetShaderiv(wl.egl.frag_shader, GL_COMPILE_STATUS, &compiled);
+    glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &compiled);
     if (!compiled) {
         GLint len = 0;
-        glGetShaderiv(wl.egl.frag_shader, GL_INFO_LOG_LENGTH, &len);
+        glGetShaderiv(frag_shader, GL_INFO_LOG_LENGTH, &len);
         if (len > 1) {
             char* info = malloc(sizeof(char) * len);
-            glGetShaderInfoLog(wl.egl.frag_shader, len, NULL, info);
+            glGetShaderInfoLog(frag_shader, len, NULL, info);
             debug("%s, failed to compile frag_Shader: %s\n", __func__, info);
             free(info);
         }
     }
 
-    wl.egl.prog_obj = glCreateProgram();
-    glAttachShader(wl.egl.prog_obj, wl.egl.vert_shader);
-    glAttachShader(wl.egl.prog_obj, wl.egl.frag_shader);
-    glLinkProgram(wl.egl.prog_obj);
-    glUseProgram(wl.egl.prog_obj);
+    wl.egl.program = glCreateProgram();
+    glAttachShader(wl.egl.program, vert_shader);
+    glAttachShader(wl.egl.program, frag_shader);
+    glLinkProgram(wl.egl.program);
+    glDeleteShader(vert_shader);
+    glDeleteShader(frag_shader);
+    glUseProgram(wl.egl.program);
 
-    wl.egl.pos = glGetAttribLocation(wl.egl.prog_obj, "vert_pos");
-    wl.egl.coord = glGetAttribLocation(wl.egl.prog_obj, "vert_coord");
-    wl.egl.sampler = glGetUniformLocation(wl.egl.prog_obj, "frag_sampler");
-    glUniform1f(glGetUniformLocation(wl.egl.prog_obj, "frag_angle"), 90 * (3.1415 * 2.0) / 360.0);
-    glUniform1f(glGetUniformLocation(wl.egl.prog_obj, "frag_aspect"), 1);
+    wl.egl.pos = glGetAttribLocation(wl.egl.program, "vert_pos");
+    wl.egl.coord = glGetAttribLocation(wl.egl.program, "vert_coord");
+    wl.egl.sampler = glGetUniformLocation(wl.egl.program, "frag_sampler");
+    glUniform1f(glGetUniformLocation(wl.egl.program, "frag_angle"), 90 * (3.1415 * 2.0) / 360.0);
+    glUniform1f(glGetUniformLocation(wl.egl.program, "frag_aspect"), 1);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glGenTextures(1, &wl.egl.tex);
