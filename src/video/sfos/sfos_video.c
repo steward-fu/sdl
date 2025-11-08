@@ -87,43 +87,43 @@ GLushort indices[] = {
 };
 
 static const char *vert_shader_code =
-    "attribute vec4 vert_pos;                                           \n"
-    "attribute vec2 vert_coord;                                         \n"
-    "varying vec2 frag_coord;                                           \n"
-    "void main()                                                        \n"
-    "{                                                                  \n"
-    "    gl_Position = vert_pos;                                        \n"
-    "    frag_coord = vert_coord;                                       \n"
-    "}                                                                  \n";
+"   attribute vec4 vert_pos;                                           \n"
+"   attribute vec2 vert_coord;                                         \n"
+"   varying vec2 frag_coord;                                           \n"
+"   void main()                                                        \n"
+"   {                                                                  \n"
+"       gl_Position = vert_pos;                                        \n"
+"       frag_coord = vert_coord;                                       \n"
+"   }                                                                  \n";
 
 static const char *frag_shader_code =
-    "precision highp float;                                             \n"
-    "varying vec2 frag_coord;                                           \n"
-    "uniform int frag_swap_color;                                       \n"
-    "uniform float frag_aspect;                                         \n"
-    "uniform float frag_angle;                                          \n"
-    "uniform sampler2D frag_sampler;                                    \n"
-    "const vec2 HALF = vec2(0.5);                                       \n"
-    "void main()                                                        \n"
-    "{                                                                  \n"
-    "    vec3 tex;                                                      \n"
-    "    float aSin = sin(frag_angle);                                  \n"
-    "    float aCos = cos(frag_angle);                                  \n"
-    "    vec2 tc = frag_coord;                                          \n"
-    "    mat2 rotMat = mat2(aCos, -aSin, aSin, aCos);                   \n"
-    "    mat2 scaleMat = mat2(frag_aspect, 0.0, 0.0, 1.0);              \n"
-    "    mat2 scaleMatInv = mat2(1.0 / frag_aspect, 0.0, 0.0, 1.0);     \n"
-    "    tc -= HALF.xy;                                                 \n"
-    "    tc = scaleMatInv * rotMat * scaleMat * tc;                     \n"
-    "    tc += HALF.xy;                                                 \n"
-    "    if (frag_swap_color >= 1) {                                    \n"
-    "        tex = texture2D(frag_sampler, tc).bgr;                     \n"
-    "    }                                                              \n"
-    "    else {                                                         \n"
-    "        tex = texture2D(frag_sampler, tc).rgb;                     \n"
-    "    }                                                              \n"
-    "    gl_FragColor = vec4(tex, 1.0);                                 \n"
-    "}                                                                  \n";
+"   precision mediump float;                                           \n"
+"   varying vec2 frag_coord;                                           \n"
+"   uniform int frag_swap_color;                                       \n"
+"   uniform float frag_aspect;                                         \n"
+"   uniform float frag_angle;                                          \n"
+"   uniform sampler2D frag_sampler;                                    \n"
+"   const vec2 HALF = vec2(0.5);                                       \n"
+"   void main()                                                        \n"
+"   {                                                                  \n"
+"       vec3 tex;                                                      \n"
+"       float aSin = sin(frag_angle);                                  \n"
+"       float aCos = cos(frag_angle);                                  \n"
+"       vec2 tc = frag_coord;                                          \n"
+"       mat2 rotMat = mat2(aCos, -aSin, aSin, aCos);                   \n"
+"       mat2 scaleMat = mat2(frag_aspect, 0.0, 0.0, 1.0);              \n"
+"       mat2 scaleMatInv = mat2(1.0 / frag_aspect, 0.0, 0.0, 1.0);     \n"
+"       tc -= HALF.xy;                                                 \n"
+"       tc = scaleMatInv * rotMat * scaleMat * tc;                     \n"
+"       tc += HALF.xy;                                                 \n"
+"       if (frag_swap_color >= 1) {                                    \n"
+"           tex = texture2D(frag_sampler, tc).bgr;                     \n"
+"       }                                                              \n"
+"       else {                                                         \n"
+"           tex = texture2D(frag_sampler, tc).rgb;                     \n"
+"       }                                                              \n"
+"       gl_FragColor = vec4(tex, 1.0);                                 \n"
+"   }                                                                  \n";
 
 static void cb_handle(
     void* dat,
@@ -169,7 +169,6 @@ static void* disp_handler(void* pParam)
 static void* input_handler(void* pParam)
 {
     int fd = -1;
-    char buf[255] = { 0 };
     struct input_event ev = { 0 };
     const char *path = DEV_PATH;
 
@@ -281,11 +280,11 @@ void wl_create(void)
     debug("%s, wl.shell_surface=%p\n", __func__, wl.shell_surface);
     debug("%s, wl.region=%p\n", __func__, wl.region);
 
-    wl.data = SDL_malloc(LCD_W * LCD_H * 4);
-    memset(wl.data, 0, LCD_W * LCD_H * 4);
+    wl.data = SDL_malloc(LCD_W * LCD_H * 4 * 2);
+    memset(wl.data, 0, LCD_W * LCD_H * 4 * 2);
 
-    wl.bg = SDL_malloc(LCD_W * LCD_H * 2);
-    memset(wl.bg, 0, LCD_W * LCD_H * 2);
+    wl.bg = SDL_malloc(LCD_W * LCD_H * 4);
+    memset(wl.bg, 0, LCD_W * LCD_H * 4);
 }
 
 void egl_create(void)
@@ -400,16 +399,72 @@ static void* draw_handler(void* pParam)
     while (wl.thread.running) {
         if (wl.ready && (pre_flip != wl.flip)) {
             pre_flip = wl.flip;
-            glVertexAttribPointer(wl.egl.pos, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), bg_vertices);
-            glVertexAttribPointer(wl.egl.coord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &bg_vertices[3]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 960, 540, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.bg);
+
+            glVertexAttribPointer(
+                wl.egl.pos,
+                3,
+                GL_FLOAT,
+                GL_FALSE,
+                5 * sizeof(GLfloat),
+                bg_vertices
+            );
+
+            glVertexAttribPointer(
+                wl.egl.coord,
+                2,
+                GL_FLOAT,
+                GL_FALSE,
+                5 * sizeof(GLfloat),
+                &bg_vertices[3]
+            );
+
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGBA,
+                LCD_H,
+                LCD_W,
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                wl.bg
+            );
+
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
-            glVertexAttribPointer(wl.egl.pos, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), fb_vertices);
-            glVertexAttribPointer(wl.egl.coord, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), &fb_vertices[3]);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, wl.info.w, wl.info.h, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, wl.pixels[wl.flip ^ 1]);
+            glVertexAttribPointer(
+                wl.egl.pos,
+                3,
+                GL_FLOAT,
+                GL_FALSE,
+                5 * sizeof(GLfloat),
+                fb_vertices
+            );
+
+            glVertexAttribPointer(
+                wl.egl.coord,
+                2,
+                GL_FLOAT,
+                GL_FALSE,
+                5 * sizeof(GLfloat),
+                &fb_vertices[3]
+            );
+
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGB,
+                wl.info.w,
+                wl.info.h,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_SHORT_5_6_5,
+                wl.pixels[wl.flip ^ 1]
+            );
+
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
+
         }
         else {
             usleep(10);
@@ -484,24 +539,26 @@ static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
     while (wl.init == 0) {
         usleep(100000);
     }
+
+    this->info.current_w = LCD_H;
+    this->info.current_h = LCD_W;
+    debug("set window size as %dx%d\n", this->info.current_w, this->info.current_h);
     return 0;
 }
 
-static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int width, int height, int bpp, Uint32 flags)
+static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
 {
-    debug("%s\n", __func__);
+    printf("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
 
-    if (width == 0) {
-        width = 640;
+    if ((w == 0) || (h == 0) || (bpp == 0)) {
+        w = 640;
+        h = 480;
+        bpp = 16;
     }
-    if (height == 0) {
-        height = 480;
-    }
-    bpp = 16;
 
     wl.ready = 0;
-    wl.info.w = width;
-    wl.info.h = height;
+    wl.info.w = w;
+    wl.info.h = h;
     wl.info.bpp = bpp;
     wl.info.size = wl.info.w * (wl.info.bpp / 8) * wl.info.h;
     debug("%s, w:%d, h:%d, bpp:%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
@@ -516,7 +573,7 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int width, in
     if (scale <= 0) {
         scale = 1;
     }
-    debug("%s, scale:%d\n", __func__, scale);
+    debug("%s, scale:%lf\n", __func__, scale);
 
     float y0 = ((float)(wl.info.w * scale) / LCD_H);
     float x0 = ((float)(wl.info.h * scale) / LCD_W);
@@ -531,8 +588,6 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int width, in
     fb_vertices[15] =  x0;
     fb_vertices[16] =  y0;
 
-    // double buffer
-    wl.flip = 0;
     memset(wl.data, 0, wl.info.size * 2);
     wl.pixels[0] = (uint16_t *)wl.data;
     wl.pixels[1] = (uint16_t *)(wl.data + wl.info.size);
@@ -545,9 +600,9 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int width, in
 
     vsurf = current;
 	current->flags = flags | SDL_DOUBLEBUF | SDL_PREALLOC;
-	current->w = width;
-	current->h = height;
-    current->pitch = width * (bpp / 8);
+	current->w = w;
+	current->h = h;
+    current->pitch = w * (bpp / 8);
     current->pixels = wl.pixels[wl.flip];
     wl.ready = 1;
     return current;
@@ -579,6 +634,7 @@ static int SFOS_FlipHWSurface(_THIS, SDL_Surface* surface)
         wl.flip ^= 1;
         vsurf->pixels = wl.pixels[wl.flip];
     }
+
     return 0;
 }
 
@@ -638,6 +694,7 @@ static SDL_VideoDevice* SFOS_CreateDevice(int devindex)
     device->ShowWMCursor = NULL;
     device->CheckMouseMode = NULL;
     device->UpdateMouse = NULL;
+
     return device;
 }
 

@@ -321,6 +321,7 @@ const SDL_VideoInfo *SDL_GetVideoInfo(void)
 	if ( current_video ) {
 		info = &current_video->info;
 	}
+printf("info %p, %dx%d\n", info, info->current_w, info->current_h);
 	return(info);
 }
 
