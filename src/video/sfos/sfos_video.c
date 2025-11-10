@@ -158,7 +158,7 @@ static void* disp_handler(void* pParam)
             wl_display_dispatch(wl.display);
         }
         else {
-            usleep(100);
+            usleep(1000);
         }
     }
 
@@ -188,7 +188,9 @@ static void* input_handler(void* pParam)
                 debug("%s, code:%d, value:%d\n", __func__, ev.code, ev.value);
             }
         }
-        usleep(10000);
+        else {
+            usleep(15000);
+        }
     }
     close(fd);
 
@@ -397,40 +399,8 @@ static void* draw_handler(void* pParam)
 
     wl.init = 1;
     while (wl.thread.running) {
-        if (wl.ready && (pre_flip != wl.flip)) {
+        if (wl.ready) { // && (pre_flip != wl.flip)) {
             pre_flip = wl.flip;
-
-            glVertexAttribPointer(
-                wl.egl.pos,
-                3,
-                GL_FLOAT,
-                GL_FALSE,
-                5 * sizeof(GLfloat),
-                bg_vertices
-            );
-
-            glVertexAttribPointer(
-                wl.egl.coord,
-                2,
-                GL_FLOAT,
-                GL_FALSE,
-                5 * sizeof(GLfloat),
-                &bg_vertices[3]
-            );
-
-            glTexImage2D(
-                GL_TEXTURE_2D,
-                0,
-                GL_RGBA,
-                LCD_H,
-                LCD_W,
-                0,
-                GL_RGBA,
-                GL_UNSIGNED_BYTE,
-                wl.bg
-            );
-
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 
             glVertexAttribPointer(
                 wl.egl.pos,
@@ -465,6 +435,41 @@ static void* draw_handler(void* pParam)
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
 
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+#if 0
+            glVertexAttribPointer(
+                wl.egl.pos,
+                3,
+                GL_FLOAT,
+                GL_FALSE,
+                5 * sizeof(GLfloat),
+                bg_vertices
+            );
+
+            glVertexAttribPointer(
+                wl.egl.coord,
+                2,
+                GL_FLOAT,
+                GL_FALSE,
+                5 * sizeof(GLfloat),
+                &bg_vertices[3]
+            );
+
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGB,
+                LCD_H,
+                LCD_W,
+                0,
+                GL_RGB,
+                GL_UNSIGNED_SHORT_5_6_5,
+                wl.bg
+            );
+
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+#endif
         }
         else {
             usleep(10);
@@ -561,7 +566,7 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h,
     wl.info.h = h;
     wl.info.bpp = bpp;
     wl.info.size = wl.info.w * (wl.info.bpp / 8) * wl.info.h;
-    debug("%s, w:%d, h:%d, bpp:%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
+    debug("%s, w=%d, h=%d, bpp=%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
 
     float c0 = (float)LCD_H / wl.info.w;
     float c1 = (float)LCD_W / wl.info.h;
@@ -573,11 +578,11 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h,
     if (scale <= 0) {
         scale = 1;
     }
-    debug("%s, scale:%lf\n", __func__, scale);
+    debug("%s, scale=%lf\n", __func__, scale);
 
     float y0 = ((float)(wl.info.w * scale) / LCD_H);
     float x0 = ((float)(wl.info.h * scale) / LCD_W);
-    debug("%s, x0:%f, y0:%f\n", __func__, x0, y0);
+    debug("%s, x0:%lf, y0:%lf\n", __func__, x0, y0);
 
     fb_vertices[0] = -x0;
     fb_vertices[1] = y0;
@@ -591,7 +596,7 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h,
     memset(wl.data, 0, wl.info.size * 2);
     wl.pixels[0] = (uint16_t *)wl.data;
     wl.pixels[1] = (uint16_t *)(wl.data + wl.info.size);
-    debug("%s, pixels:%p\n", __func__, wl.data);
+    debug("%s, pixels[0]=%p, pixels[1]=%p\n", __func__, wl.pixels[0], wl.pixels[1]);
 
 	if (!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
 		SDL_SetError("failed to allocate new pixel format for requested mode");
