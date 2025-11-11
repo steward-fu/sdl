@@ -862,10 +862,10 @@ dnl See if GCC's -fvisibility=hidden is supported (gcc4 and later, usually).
 dnl  Details of this flag are here: http://gcc.gnu.org/wiki/Visibility
 CheckVisibilityHidden()
 {
-    AC_MSG_CHECKING(for GCC -fvisibility=hidden option)
+    AC_MSG_CHECKING(for GCC -fvisibility=default option)
     have_gcc_fvisibility=no
 
-    visibility_CFLAGS="-fvisibility=hidden"
+    visibility_CFLAGS="-fvisibility=default"
     save_CFLAGS="$CFLAGS"
     CFLAGS="$save_CFLAGS $visibility_CFLAGS -Werror"
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[

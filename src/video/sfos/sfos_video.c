@@ -34,6 +34,7 @@ typedef enum {
 static wayland wl = { 0 };
 static sfos_filter_t filter = 0;
 static SDL_Surface *vsurf = NULL;
+static void *fast_buf = NULL;
 
 EGLint surf_cfg[] = {
     EGL_SURFACE_TYPE,
@@ -92,8 +93,14 @@ static const char *vert_shader_code =
 "   varying vec2 frag_coord;                                           \n"
 "   void main()                                                        \n"
 "   {                                                                  \n"
-"       gl_Position = vert_pos;                                        \n"
 "       frag_coord = vert_coord;                                       \n"
+#if 1
+"       gl_Position = vert_pos;                                        \n"
+#else
+"       const float angle = 270.0 * (3.1415 * 2.0) / 360.0;                                                                            \n"
+"       mat4 rot = mat4(cos(angle), -sin(angle), 0.0, 0.0, sin(angle), cos(angle), 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \n"
+"       gl_Position = vert_pos * rot; \n"
+#endif
 "   }                                                                  \n";
 
 static const char *frag_shader_code =
@@ -106,6 +113,7 @@ static const char *frag_shader_code =
 "   const vec2 HALF = vec2(0.5);                                       \n"
 "   void main()                                                        \n"
 "   {                                                                  \n"
+#if 1
 "       vec3 tex;                                                      \n"
 "       float aSin = sin(frag_angle);                                  \n"
 "       float aCos = cos(frag_angle);                                  \n"
@@ -123,6 +131,9 @@ static const char *frag_shader_code =
 "           tex = texture2D(frag_sampler, tc).rgb;                     \n"
 "       }                                                              \n"
 "       gl_FragColor = vec4(tex, 1.0);                                 \n"
+#else
+"       gl_FragColor = texture2D(frag_sampler, frag_coord);            \n"
+#endif
 "   }                                                                  \n";
 
 static void cb_handle(
@@ -391,6 +402,7 @@ void egl_create(void)
 
 static void* draw_handler(void* pParam)
 {
+    void* fast = NULL;
     int pre_flip = -1;
 
     debug("%s++\n", __func__);
@@ -399,6 +411,7 @@ static void* draw_handler(void* pParam)
 
     wl.init = 1;
     while (wl.thread.running) {
+        fast = fast_buf;
         if (wl.ready) { // && (pre_flip != wl.flip)) {
             pre_flip = wl.flip;
 
@@ -423,13 +436,13 @@ static void* draw_handler(void* pParam)
             glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
-                GL_RGB,
+                wl.info.bpp == 16 ? GL_RGB : GL_RGBA,
                 wl.info.w,
                 wl.info.h,
                 0,
-                GL_RGB,
-                GL_UNSIGNED_SHORT_5_6_5,
-                wl.pixels[wl.flip ^ 1]
+                wl.info.bpp == 16 ? GL_RGB : GL_RGBA,
+                wl.info.bpp == 16 ? GL_UNSIGNED_SHORT_5_6_5 : GL_UNSIGNED_BYTE,
+                fast ? fast : wl.pixels[wl.flip ^ 1]
             );
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
@@ -437,6 +450,7 @@ static void* draw_handler(void* pParam)
 
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
+
 #if 0
             glVertexAttribPointer(
                 wl.egl.pos,
@@ -553,8 +567,9 @@ static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
 
 static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
 {
-    printf("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
+    debug("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
 
+    fast_buf = NULL;
     if ((w == 0) || (h == 0) || (bpp == 0)) {
         w = 640;
         h = 480;
@@ -709,6 +724,14 @@ VideoBootStrap SFOS_bootstrap = {
     SFOS_Available,
     SFOS_CreateDevice
 };
+
+int UpdateFastBuffer(void* pixels)
+{
+    debug("call %s(pixels=%p)\n", __func__, pixels);
+
+    fast_buf = pixels;
+    return 0;
+}
 
 #endif
 
