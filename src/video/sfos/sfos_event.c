@@ -48,6 +48,7 @@ void SFOS_PumpEvents(_THIS)
             SDL_PrivateKeyboard(SDL_RELEASED, &keysym);
         }
     }
+    usleep(10);
 }
 
 void SFOS_InitOSKeymap(_THIS)
