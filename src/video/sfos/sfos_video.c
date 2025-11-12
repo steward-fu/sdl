@@ -88,53 +88,35 @@ GLushort indices[] = {
 };
 
 static const char *vert_shader_code =
-"   attribute vec4 vert_pos;                                           \n"
-"   attribute vec2 vert_coord;                                         \n"
-"   varying vec2 frag_coord;                                           \n"
-"   void main()                                                        \n"
-"   {                                                                  \n"
-"       frag_coord = vert_coord;                                       \n"
-#if 1
-"       gl_Position = vert_pos;                                        \n"
-#else
-"       const float angle = 270.0 * (3.1415 * 2.0) / 360.0;                                                                            \n"
-"       mat4 rot = mat4(cos(angle), -sin(angle), 0.0, 0.0, sin(angle), cos(angle), 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0); \n"
-"       gl_Position = vert_pos * rot; \n"
-#endif
-"   }                                                                  \n";
+"   attribute vec4 vert_pos;                                            \n"
+"   attribute vec2 vert_coord;                                          \n"
+"   varying vec2 frag_coord;                                            \n"
+"   void main()                                                         \n"
+"   {                                                                   \n"
+"       frag_coord = vert_coord;                                        \n"
+"       gl_Position = vert_pos;                                         \n"
+"   }                                                                   \n";
 
 static const char *frag_shader_code =
-"   precision mediump float;                                           \n"
-"   varying vec2 frag_coord;                                           \n"
-"   uniform int frag_swap_color;                                       \n"
-"   uniform float frag_aspect;                                         \n"
-"   uniform float frag_angle;                                          \n"
-"   uniform sampler2D frag_sampler;                                    \n"
-"   const vec2 HALF = vec2(0.5);                                       \n"
-"   void main()                                                        \n"
-"   {                                                                  \n"
-#if 1
-"       vec3 tex;                                                      \n"
-"       float aSin = sin(frag_angle);                                  \n"
-"       float aCos = cos(frag_angle);                                  \n"
-"       vec2 tc = frag_coord;                                          \n"
-"       mat2 rotMat = mat2(aCos, -aSin, aSin, aCos);                   \n"
-"       mat2 scaleMat = mat2(frag_aspect, 0.0, 0.0, 1.0);              \n"
-"       mat2 scaleMatInv = mat2(1.0 / frag_aspect, 0.0, 0.0, 1.0);     \n"
-"       tc -= HALF.xy;                                                 \n"
-"       tc = scaleMatInv * rotMat * scaleMat * tc;                     \n"
-"       tc += HALF.xy;                                                 \n"
-"       if (frag_swap_color >= 1) {                                    \n"
-"           tex = texture2D(frag_sampler, tc).bgr;                     \n"
-"       }                                                              \n"
-"       else {                                                         \n"
-"           tex = texture2D(frag_sampler, tc).rgb;                     \n"
-"       }                                                              \n"
-"       gl_FragColor = vec4(tex, 1.0);                                 \n"
-#else
-"       gl_FragColor = texture2D(frag_sampler, frag_coord);            \n"
-#endif
-"   }                                                                  \n";
+"   precision mediump float;                                            \n"
+"   varying vec2 frag_coord;                                            \n"
+"   uniform sampler2D frag_sampler;                                     \n"
+"   const vec2 HALF = vec2(0.5);                                        \n"
+"   const float aSin = 1.0;                                             \n"
+"   const float aCos = 0.000046;                                        \n"
+"   mat2 rotMat = mat2(aCos, -aSin, aSin, aCos);                        \n"
+"   mat2 scaleMat = mat2(1.0, 0.0, 0.0, 1.0);                           \n"
+"   mat2 scaleMatInv = mat2(1.0, 0.0, 0.0, 1.0);                        \n"
+"   void main()                                                         \n"
+"   {                                                                   \n"
+"       vec3 tex;                                                       \n"
+"       vec2 tc = frag_coord;                                           \n"
+"       tc -= HALF.xy;                                                  \n"
+"       tc = scaleMatInv * rotMat * scaleMat * tc;                      \n"
+"       tc += HALF.xy;                                                  \n"
+"       tex = texture2D(frag_sampler, tc).rgb;                          \n"
+"       gl_FragColor = vec4(tex, 1.0);                                  \n"
+"   }                                                                   \n";
 
 static void cb_handle(
     void* dat,
@@ -366,12 +348,10 @@ void egl_create(void)
     wl.egl.pos = glGetAttribLocation(wl.egl.program, "vert_pos");
     wl.egl.coord = glGetAttribLocation(wl.egl.program, "vert_coord");
     wl.egl.sampler = glGetUniformLocation(wl.egl.program, "frag_sampler");
-    glUniform1f(glGetUniformLocation(wl.egl.program, "frag_angle"), 90 * (3.1415 * 2.0) / 360.0);
-    glUniform1f(glGetUniformLocation(wl.egl.program, "frag_aspect"), 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     glGenTextures(1, &wl.egl.tex);
     glBindTexture(GL_TEXTURE_2D, wl.egl.tex);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     if (filter == FILTER_PIXEL) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
