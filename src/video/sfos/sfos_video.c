@@ -223,11 +223,8 @@ void egl_free(void)
     eglDestroySurface(wl.egl.display, wl.egl.surface);
     eglDestroyContext(wl.egl.display, wl.egl.context);
     eglTerminate(wl.egl.display);
-
-#if defined(QX1000) || defined(QX1050)
     glUseProgram(0);
     glDeleteProgram(wl.egl.program);
-#endif
 }
 
 void wl_free(void)
@@ -469,6 +466,9 @@ static void* draw_handler(void* pParam)
             usleep(10);
         }
     }
+
+    egl_free();
+    wl_free();
     return NULL;
 }
 
@@ -488,8 +488,6 @@ static void SFOS_DeleteDevice(SDL_VideoDevice* device)
         pthread_join(wl.thread.id[0], NULL);
         pthread_join(wl.thread.id[1], NULL);
         pthread_join(wl.thread.id[2], NULL);
-        egl_free();
-        wl_free();
     }
 
     if (device) {
