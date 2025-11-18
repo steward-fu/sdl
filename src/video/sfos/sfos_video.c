@@ -33,8 +33,6 @@ typedef enum {
 
 static wayland wl = { 0 };
 static sfos_filter_t filter = 0;
-static SDL_Surface *vsurf = NULL;
-static void *fast_buf = NULL;
 
 EGLint surf_cfg[] = {
     EGL_SURFACE_TYPE,
@@ -146,14 +144,16 @@ static void* disp_handler(void* pParam)
 {
     debug("%s++\n", __func__);
 
+    wl.disp_ready = 1;
     while (wl.thread.running) {
-        if (wl.init && wl.ready) {
+        if (wl.draw_ready) {
             wl_display_dispatch(wl.display);
         }
         else {
-            usleep(1000);
+            usleep(15000);
         }
     }
+    wl.disp_ready = 0;
 
     debug("%s--\n", __func__);
     return NULL;
@@ -215,26 +215,19 @@ static const struct wl_shell_surface_listener cb_shell_surf = {
     cb_popup_done
 };
 
-void egl_free(void)
+void egl_quit(void)
 {
-    wl.init = 0;
-    wl.ready = 0;
-
+    eglSwapBuffers(wl.egl.display, wl.egl.surface);
     eglDestroySurface(wl.egl.display, wl.egl.surface);
     eglDestroyContext(wl.egl.display, wl.egl.context);
     eglTerminate(wl.egl.display);
 
-#if defined(QX1000) || defined(QX1050)
     glUseProgram(0);
     glDeleteProgram(wl.egl.program);
-#endif
 }
 
-void wl_free(void)
+void wl_quit(void)
 {
-    wl.init = 0;
-    wl.ready = 0;
-
     wl_shell_surface_destroy(wl.shell_surface);
     wl_shell_destroy(wl.shell);
     wl_surface_destroy(wl.surface);
@@ -245,11 +238,13 @@ void wl_free(void)
 
     free(wl.bg);
     wl.bg = NULL;
-    free(wl.data);
-    wl.data = NULL;
+    for (int i = 0; i <MAX_FB; i++) {
+        free(wl.fg[i]);
+        wl.fg[i] = NULL;
+    }
 }
 
-void wl_create(void)
+void wl_init(void)
 {
     wl.display = wl_display_connect(NULL);
     wl.registry = wl_display_get_registry(wl.display);
@@ -268,21 +263,20 @@ void wl_create(void)
     wl_surface_set_opaque_region(wl.surface, wl.region);
     wl.window = wl_egl_window_create(wl.surface, LCD_W, LCD_H);
 
-    debug("%s, wl.display=%p\n", __func__, wl.display);
-    debug("%s, wl.registry=%p\n", __func__, wl.registry);
-    debug("%s, wl.surface=%p\n", __func__, wl.surface);
-    debug("%s, wl.shell=%p\n", __func__, wl.shell);
-    debug("%s, wl.shell_surface=%p\n", __func__, wl.shell_surface);
-    debug("%s, wl.region=%p\n", __func__, wl.region);
+    debug("%s, wl.display @%p\n", __func__, wl.display);
+    debug("%s, wl.registry @%p\n", __func__, wl.registry);
+    debug("%s, wl.surface @%p\n", __func__, wl.surface);
+    debug("%s, wl.shell @%p\n", __func__, wl.shell);
+    debug("%s, wl.shell_surface @%p\n", __func__, wl.shell_surface);
+    debug("%s, wl.region @%p\n", __func__, wl.region);
 
-    wl.data = SDL_malloc(LCD_W * LCD_H * 4 * 2);
-    memset(wl.data, 0, LCD_W * LCD_H * 4 * 2);
-
-    wl.bg = SDL_malloc(LCD_W * LCD_H * 4);
-    memset(wl.bg, 0, LCD_W * LCD_H * 4);
+    wl.bg = calloc(LCD_W * LCD_H * 4, 1);
+    for (int i = 0; i < MAX_FB; i++) {
+        wl.fg[i] = calloc(LCD_W * LCD_H * 4, 1);
+    }
 }
 
-void egl_create(void)
+void egl_init(void)
 {
     EGLint cnt = 0;
     EGLint major = 0;
@@ -299,10 +293,10 @@ void egl_create(void)
     wl.egl.context = eglCreateContext(wl.egl.display, cfg, EGL_NO_CONTEXT, ctx_cfg);
     eglMakeCurrent(wl.egl.display, wl.egl.surface, wl.egl.surface, wl.egl.context);
 
-    debug("%s, egl_display=%p\n", __func__, wl.egl.display);
-    debug("%s, egl_window=%p\n", __func__, wl.window);
-    debug("%s, egl_surface=%p\n", __func__, wl.egl.surface);
-    debug("%s, egl_context=%p\n", __func__, wl.egl.context);
+    debug("%s, egl.display=%p\n", __func__, wl.egl.display);
+    debug("%s, egl.window=%p\n", __func__, wl.window);
+    debug("%s, egl.surface=%p\n", __func__, wl.egl.surface);
+    debug("%s, egl.context=%p\n", __func__, wl.egl.context);
 
     vert_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vert_shader, 1, &vert_shader_code, NULL);
@@ -374,25 +368,24 @@ void egl_create(void)
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(wl.egl.sampler, 0);
 
-    debug("%s, textureId   0x%x\n", __func__, wl.egl.tex);
-    debug("%s, samplerLoc  0x%x\n", __func__, wl.egl.sampler);
-    debug("%s, positionLoc 0x%x\n", __func__, wl.egl.pos);
-    debug("%s, texCoordLoc 0x%x\n", __func__, wl.egl.coord);
+    debug("%s, egl.tex 0x%x\n", __func__, wl.egl.tex);
+    debug("%s, egl.pos 0x%x\n", __func__, wl.egl.pos);
+    debug("%s, egl.coord 0x%x\n", __func__, wl.egl.coord);
+    debug("%s, egl.sampler 0x%x\n", __func__, wl.egl.sampler);
 }
 
 static void* draw_handler(void* pParam)
 {
-    void* fast = NULL;
     int pre_flip = -1;
 
     debug("%s++\n", __func__);
-    wl_create();
-    egl_create();
 
-    wl.init = 1;
+    wl_init();
+    egl_init();
+    wl.draw_ready = 1;
+
     while (wl.thread.running) {
-        fast = fast_buf;
-        if (wl.ready) { // && (pre_flip != wl.flip)) {
+        if (wl.disp_ready && (pre_flip != wl.flip)) {
             pre_flip = wl.flip;
 
             glVertexAttribPointer(
@@ -422,16 +415,16 @@ static void* draw_handler(void* pParam)
                 0,
                 wl.info.bpp == 16 ? GL_RGB : GL_RGBA,
                 wl.info.bpp == 16 ? GL_UNSIGNED_SHORT_5_6_5 : GL_UNSIGNED_BYTE,
-                fast ? fast : wl.pixels[wl.flip ^ 1]
+                wl.fg[wl.flip ^ 1]
             );
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
 
+#if 1
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-
-#if 0
+#else
             glVertexAttribPointer(
                 wl.egl.pos,
                 3,
@@ -469,6 +462,13 @@ static void* draw_handler(void* pParam)
             usleep(10);
         }
     }
+
+    egl_quit();
+    wl_quit();
+    wl.draw_ready = 0;
+
+    debug("%s--\n", __func__);
+
     return NULL;
 }
 
@@ -488,8 +488,6 @@ static void SFOS_DeleteDevice(SDL_VideoDevice* device)
         pthread_join(wl.thread.id[0], NULL);
         pthread_join(wl.thread.id[1], NULL);
         pthread_join(wl.thread.id[2], NULL);
-        egl_free();
-        wl_free();
     }
 
     if (device) {
@@ -535,13 +533,14 @@ static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
     pthread_create(&wl.thread.id[0], NULL, disp_handler, NULL);
     pthread_create(&wl.thread.id[1], NULL, input_handler, NULL);
     pthread_create(&wl.thread.id[2], NULL, draw_handler, NULL);
-    while (wl.init == 0) {
-        usleep(100000);
+    while ((wl.disp_ready == 0) || (wl.draw_ready == 0)) {
+        usleep(15000);
     }
 
     this->info.current_w = LCD_H;
     this->info.current_h = LCD_W;
     debug("set window size as %dx%d\n", this->info.current_w, this->info.current_h);
+
     return 0;
 }
 
@@ -549,14 +548,12 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h,
 {
     debug("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
 
-    fast_buf = NULL;
     if ((w == 0) || (h == 0) || (bpp == 0)) {
         w = 640;
         h = 480;
         bpp = 16;
     }
 
-    wl.ready = 0;
     wl.info.w = w;
     wl.info.h = h;
     wl.info.bpp = bpp;
@@ -588,23 +585,17 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h,
     fb_vertices[15] =  x0;
     fb_vertices[16] =  y0;
 
-    memset(wl.data, 0, wl.info.size * 2);
-    wl.pixels[0] = (uint16_t *)wl.data;
-    wl.pixels[1] = (uint16_t *)(wl.data + wl.info.size);
-    debug("%s, pixels[0]=%p, pixels[1]=%p\n", __func__, wl.pixels[0], wl.pixels[1]);
-
 	if (!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
 		SDL_SetError("failed to allocate new pixel format for requested mode");
 		return NULL;
 	}
 
-    vsurf = current;
 	current->flags = flags | SDL_DOUBLEBUF | SDL_PREALLOC;
 	current->w = w;
 	current->h = h;
     current->pitch = w * (bpp / 8);
-    current->pixels = wl.pixels[wl.flip];
-    wl.ready = 1;
+    current->pixels = wl.fg[wl.flip];
+
     return current;
 }
 
@@ -630,9 +621,11 @@ static void SFOS_UnlockHWSurface(_THIS, SDL_Surface* surface)
 
 static int SFOS_FlipHWSurface(_THIS, SDL_Surface* surface)
 {
-    if (wl.init && wl.ready) {
+    if (wl.disp_ready && wl.draw_ready) {
         wl.flip ^= 1;
-        vsurf->pixels = wl.pixels[wl.flip];
+        if (surface) {
+            surface->pixels = wl.fg[wl.flip];
+        }
     }
 
     return 0;
@@ -704,14 +697,6 @@ VideoBootStrap SFOS_bootstrap = {
     SFOS_Available,
     SFOS_CreateDevice
 };
-
-int UpdateFastBuffer(void* pixels)
-{
-    debug("call %s(pixels=%p)\n", __func__, pixels);
-
-    fast_buf = pixels;
-    return 0;
-}
 
 #endif
 

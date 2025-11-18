@@ -86,13 +86,12 @@ typedef struct {
         pthread_t id[3];
     } thread;
 
-    int init;
-    int flip;
-    int ready;
+    int disp_ready;
+    int draw_ready;
 
-    uint8_t *bg;
-    uint8_t *data;
-    uint16_t *pixels[MAX_FB];
+    int flip;
+    void *bg;
+    void *fg[MAX_FB];
 } wayland;
 
 #endif
