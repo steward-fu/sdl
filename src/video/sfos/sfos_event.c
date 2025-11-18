@@ -27,7 +27,7 @@
 uint8_t mykey[KEY_MAX][2] = { 0 };
 static int mymap[KEY_MAX] = { 0 };
 
-void SFOS_PumpEvents(_THIS)
+void sfos_pumpEvents(_THIS)
 {
     int c0 = 0;
     SDL_keysym keysym;
@@ -51,7 +51,7 @@ void SFOS_PumpEvents(_THIS)
     usleep(10);
 }
 
-void SFOS_InitOSKeymap(_THIS)
+void sfos_init_os_keymap(_THIS)
 {
     mymap[KEY_0]          = SDLK_0;
     mymap[KEY_1]          = SDLK_1;

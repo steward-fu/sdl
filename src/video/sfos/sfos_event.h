@@ -10,8 +10,8 @@
 
 #include "sfos_video.h"
 
-void SFOS_PumpEvents(_THIS);
-void SFOS_InitOSKeymap(_THIS);
+void sfos_pump_events(_THIS);
+void sfos_init_os_keymap(_THIS);
 
 #endif
 

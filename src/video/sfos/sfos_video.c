@@ -472,14 +472,14 @@ static void* draw_handler(void* pParam)
     return NULL;
 }
 
-static int SFOS_Available(void)
+static int available(void)
 {
     debug("%s\n", __func__);
 
     return 1;
 }
 
-static void SFOS_DeleteDevice(SDL_VideoDevice* device)
+static void delete_device(SDL_VideoDevice* device)
 {
     debug("%s\n", __func__);
 
@@ -495,27 +495,29 @@ static void SFOS_DeleteDevice(SDL_VideoDevice* device)
     }
 }
 
-static int SFOS_HWAccelBlit(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect)
+static int hw_accel_blit(SDL_Surface* src, SDL_Rect* srcrect, SDL_Surface* dst, SDL_Rect* dstrect)
 {
     debug("%s\n", __func__);
+
     return 0;
 }
 
-static int SFOS_CheckHWBlit(_THIS, SDL_Surface* src, SDL_Surface* dst)
+static int check_hw_blit(_THIS, SDL_Surface* src, SDL_Surface* dst)
 {
     debug("%s\n", __func__);
-    src->map->hw_blit = SFOS_HWAccelBlit;
+
+    src->map->hw_blit = hw_accel_blit;
     return 1;
 }
 
-static SDL_Rect** SFOS_ListModes(_THIS, SDL_PixelFormat* format, Uint32 flags)
+static SDL_Rect** list_modes(_THIS, SDL_PixelFormat* format, Uint32 flags)
 {
     debug("%s\n", __func__);
 
     return (SDL_Rect**)-1;
 }
 
-static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
+static int video_init(_THIS, SDL_PixelFormat* vformat)
 {
     const char *var = NULL;
 
@@ -544,7 +546,7 @@ static int SFOS_VideoInit(_THIS, SDL_PixelFormat* vformat)
     return 0;
 }
 
-static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
+static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
 {
     debug("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
 
@@ -599,27 +601,28 @@ static SDL_Surface* SFOS_SetVideoMode(_THIS, SDL_Surface* current, int w, int h,
     return current;
 }
 
-static int SFOS_AllocHWSurface(_THIS, SDL_Surface* surface)
+static int alloc_hw_surface(_THIS, SDL_Surface* surface)
 {
     debug("%s\n", __func__);
+
     return 0;
 }
 
-static void SFOS_FreeHWSurface(_THIS, SDL_Surface* surface)
+static void free_hw_surface(_THIS, SDL_Surface* surface)
 {
     debug("%s\n", __func__);
 }
 
-static int SFOS_LockHWSurface(_THIS, SDL_Surface* surface)
+static int lock_hw_surface(_THIS, SDL_Surface* surface)
 {
     return 0;
 }
 
-static void SFOS_UnlockHWSurface(_THIS, SDL_Surface* surface)
+static void unlock_hw_surface(_THIS, SDL_Surface* surface)
 {
 }
 
-static int SFOS_FlipHWSurface(_THIS, SDL_Surface* surface)
+static int flip_hw_surface(_THIS, SDL_Surface* surface)
 {
     if (wl.disp_ready && wl.draw_ready) {
         wl.flip ^= 1;
@@ -631,23 +634,24 @@ static int SFOS_FlipHWSurface(_THIS, SDL_Surface* surface)
     return 0;
 }
 
-static void SFOS_UpdateRects(_THIS, int numrects, SDL_Rect* rects)
+static void update_rects(_THIS, int numrects, SDL_Rect* rects)
 {
-    SFOS_FlipHWSurface(NULL, NULL);
+    flip_hw_surface(NULL, NULL);
 }
 
-static int SFOS_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color* colors)
+static int set_colors(_THIS, int firstcolor, int ncolors, SDL_Color* colors)
 {
     debug("%s\n", __func__);
+
     return 0;
 }
 
-static void SFOS_VideoQuit(_THIS)
+static void video_quit(_THIS)
 {
     debug("%s\n", __func__);
 }
 
-static SDL_VideoDevice* SFOS_CreateDevice(int devindex)
+static SDL_VideoDevice* create_device(int devindex)
 {
     SDL_VideoDevice* device = NULL;
 
@@ -659,30 +663,30 @@ static SDL_VideoDevice* SFOS_CreateDevice(int devindex)
         return 0;
     }
 
-    device->VideoInit = SFOS_VideoInit;
-    device->ListModes = SFOS_ListModes;
-    device->SetVideoMode = SFOS_SetVideoMode;
+    device->VideoInit = video_init;
+    device->ListModes = list_modes;
+    device->SetVideoMode = set_video_mode;
     device->CreateYUVOverlay = NULL;
-    device->SetColors = SFOS_SetColors;
-    device->UpdateRects = SFOS_UpdateRects;
-    device->VideoQuit = SFOS_VideoQuit;
-    device->AllocHWSurface = SFOS_AllocHWSurface;
-    device->CheckHWBlit = SFOS_CheckHWBlit;
+    device->SetColors = set_colors;
+    device->UpdateRects = update_rects;
+    device->VideoQuit = video_quit;
+    device->AllocHWSurface = alloc_hw_surface;
+    device->CheckHWBlit = check_hw_blit;
     device->FillHWRect = NULL;
     device->SetHWColorKey = NULL;
     device->SetHWAlpha = NULL;
-    device->LockHWSurface = SFOS_LockHWSurface;
-    device->UnlockHWSurface = SFOS_UnlockHWSurface;
-    device->FlipHWSurface = SFOS_FlipHWSurface;
-    device->FreeHWSurface = SFOS_FreeHWSurface;
+    device->LockHWSurface = lock_hw_surface;
+    device->UnlockHWSurface = unlock_hw_surface;
+    device->FlipHWSurface = flip_hw_surface;
+    device->FreeHWSurface = free_hw_surface;
     device->SetCaption = NULL;
     device->SetIcon = NULL;
     device->IconifyWindow = NULL;
     device->GrabInput = NULL;
     device->GetWMInfo = NULL;
-    device->InitOSKeymap = SFOS_InitOSKeymap;
-    device->PumpEvents = SFOS_PumpEvents;
-    device->free = SFOS_DeleteDevice;
+    device->InitOSKeymap = sfos_init_os_keymap;
+    device->PumpEvents = sfos_pump_events;
+    device->free = delete_device;
     device->CreateWMCursor = NULL;
     device->ShowWMCursor = NULL;
     device->CheckMouseMode = NULL;
@@ -691,11 +695,11 @@ static SDL_VideoDevice* SFOS_CreateDevice(int devindex)
     return device;
 }
 
-VideoBootStrap SFOS_bootstrap = {
+VideoBootStrap sfos_bootstrap = {
     "sfos",
     "SDL Video Driver for Sailfish OS",
-    SFOS_Available,
-    SFOS_CreateDevice
+    available,
+    create_device
 };
 
 #endif

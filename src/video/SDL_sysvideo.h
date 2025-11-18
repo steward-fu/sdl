@@ -414,7 +414,7 @@ extern VideoBootStrap CACA_bootstrap;
 extern VideoBootStrap DUMMY_bootstrap;
 #endif
 #if SDL_VIDEO_DRIVER_SFOS
-extern VideoBootStrap SFOS_bootstrap;
+extern VideoBootStrap sfos_bootstrap;
 #endif
 
 /* This is the current video device */
