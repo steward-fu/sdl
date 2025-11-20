@@ -92,6 +92,9 @@ typedef struct {
     int flip;
     void *bg;
     void *fg[MAX_FB];
+
+    int app_flip;
+    void *app_fg;
 } wayland;
 
 #endif

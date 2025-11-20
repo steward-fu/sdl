@@ -27,7 +27,7 @@
 uint8_t mykey[KEY_MAX][2] = { 0 };
 static int mymap[KEY_MAX] = { 0 };
 
-void sfos_pumpEvents(_THIS)
+void sfos_pump_events(_THIS)
 {
     int c0 = 0;
     SDL_keysym keysym;

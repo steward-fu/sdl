@@ -377,6 +377,7 @@ void egl_init(void)
 static void* draw_handler(void* pParam)
 {
     int pre_flip = -1;
+    int pre_app_flip = -1;
 
     debug("%s++\n", __func__);
 
@@ -385,8 +386,9 @@ static void* draw_handler(void* pParam)
     wl.draw_ready = 1;
 
     while (wl.thread.running) {
-        if (wl.disp_ready && (pre_flip != wl.flip)) {
+        if (wl.disp_ready && ((pre_flip != wl.flip) || (pre_app_flip != wl.app_flip))) {
             pre_flip = wl.flip;
+            pre_app_flip = wl.app_flip;
 
             glVertexAttribPointer(
                 wl.egl.pos,
@@ -415,12 +417,13 @@ static void* draw_handler(void* pParam)
                 0,
                 wl.info.bpp == 16 ? GL_RGB : GL_RGBA,
                 wl.info.bpp == 16 ? GL_UNSIGNED_SHORT_5_6_5 : GL_UNSIGNED_BYTE,
-                wl.fg[wl.flip ^ 1]
+                wl.app_fg ? wl.app_fg : wl.fg[wl.flip ^ 1]
             );
+            wl.app_fg = NULL;
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
-
+            debug("swap buffer\n");
 #if 1
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
@@ -482,13 +485,6 @@ static int available(void)
 static void delete_device(SDL_VideoDevice* device)
 {
     debug("%s\n", __func__);
-
-    if (wl.thread.running) {
-        wl.thread.running = 0;
-        pthread_join(wl.thread.id[0], NULL);
-        pthread_join(wl.thread.id[1], NULL);
-        pthread_join(wl.thread.id[2], NULL);
-    }
 
     if (device) {
         SDL_free(device);
@@ -624,10 +620,15 @@ static void unlock_hw_surface(_THIS, SDL_Surface* surface)
 
 static int flip_hw_surface(_THIS, SDL_Surface* surface)
 {
+    debug("call %s\n", __func__);
+
     if (wl.disp_ready && wl.draw_ready) {
-        wl.flip ^= 1;
         if (surface) {
+            wl.flip ^= 1;
+            debug("%s, flip=%d\n", __func__, wl.flip);
+
             surface->pixels = wl.fg[wl.flip];
+            debug("%s, update surface buffer to %p\n", __func__, surface->pixels);
         }
     }
 
@@ -649,6 +650,13 @@ static int set_colors(_THIS, int firstcolor, int ncolors, SDL_Color* colors)
 static void video_quit(_THIS)
 {
     debug("%s\n", __func__);
+
+    if (wl.thread.running) {
+        wl.thread.running = 0;
+        pthread_join(wl.thread.id[0], NULL);
+        pthread_join(wl.thread.id[1], NULL);
+        pthread_join(wl.thread.id[2], NULL);
+    }
 }
 
 static SDL_VideoDevice* create_device(int devindex)
@@ -701,6 +709,21 @@ VideoBootStrap sfos_bootstrap = {
     available,
     create_device
 };
+
+int fast_flip(const void *p, int wait)
+{
+    wl.app_fg = (void *)p;
+    wl.app_flip ^= 1;
+    debug("%s, wl.app_flip=%d, p=%p, wait=%d\n", __func__, wl.app_flip, p, wait);
+
+    debug("%s, wait++\n", __func__);
+    while (wait && wl.app_fg) {
+        usleep(10);
+    }
+    debug("%s, wait--\n", __func__);
+
+    return 0;
+}
 
 #endif
 
