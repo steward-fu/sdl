@@ -293,10 +293,10 @@ void egl_init(void)
     wl.egl.context = eglCreateContext(wl.egl.display, cfg, EGL_NO_CONTEXT, ctx_cfg);
     eglMakeCurrent(wl.egl.display, wl.egl.surface, wl.egl.surface, wl.egl.context);
 
-    debug("%s, egl.display=%p\n", __func__, wl.egl.display);
-    debug("%s, egl.window=%p\n", __func__, wl.window);
-    debug("%s, egl.surface=%p\n", __func__, wl.egl.surface);
-    debug("%s, egl.context=%p\n", __func__, wl.egl.context);
+    debug("%s, egl.display @%p\n", __func__, wl.egl.display);
+    debug("%s, egl.window @%p\n", __func__, wl.window);
+    debug("%s, egl.surface @%p\n", __func__, wl.egl.surface);
+    debug("%s, egl.context @%p\n", __func__, wl.egl.context);
 
     vert_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vert_shader, 1, &vert_shader_code, NULL);
@@ -368,10 +368,10 @@ void egl_init(void)
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(wl.egl.sampler, 0);
 
-    debug("%s, egl.tex 0x%x\n", __func__, wl.egl.tex);
-    debug("%s, egl.pos 0x%x\n", __func__, wl.egl.pos);
-    debug("%s, egl.coord 0x%x\n", __func__, wl.egl.coord);
-    debug("%s, egl.sampler 0x%x\n", __func__, wl.egl.sampler);
+    debug("%s, egl.tex = 0x%x\n", __func__, wl.egl.tex);
+    debug("%s, egl.pos = 0x%x\n", __func__, wl.egl.pos);
+    debug("%s, egl.coord = 0x%x\n", __func__, wl.egl.coord);
+    debug("%s, egl.sampler = 0x%x\n", __func__, wl.egl.sampler);
 }
 
 static void* draw_handler(void* pParam)
@@ -486,6 +486,13 @@ static void delete_device(SDL_VideoDevice* device)
 {
     debug("%s\n", __func__);
 
+    if (wl.thread.running) {
+        wl.thread.running = 0;
+        pthread_join(wl.thread.id[0], NULL);
+        pthread_join(wl.thread.id[1], NULL);
+        pthread_join(wl.thread.id[2], NULL);
+    }
+
     if (device) {
         SDL_free(device);
     }
@@ -542,7 +549,7 @@ static int video_init(_THIS, SDL_PixelFormat* vformat)
     return 0;
 }
 
-static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
+static int change_geometry(int w, int h, int bpp)
 {
     debug("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
 
@@ -582,6 +589,15 @@ static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, in
     fb_vertices[11] = -y0;
     fb_vertices[15] =  x0;
     fb_vertices[16] =  y0;
+
+    return 0;
+}
+
+static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
+{
+    debug("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
+
+    change_geometry(w, h, bpp);
 
 	if (!SDL_ReallocFormat(current, bpp, 0, 0, 0, 0)) {
 		SDL_SetError("failed to allocate new pixel format for requested mode");
@@ -650,13 +666,6 @@ static int set_colors(_THIS, int firstcolor, int ncolors, SDL_Color* colors)
 static void video_quit(_THIS)
 {
     debug("%s\n", __func__);
-
-    if (wl.thread.running) {
-        wl.thread.running = 0;
-        pthread_join(wl.thread.id[0], NULL);
-        pthread_join(wl.thread.id[1], NULL);
-        pthread_join(wl.thread.id[2], NULL);
-    }
 }
 
 static SDL_VideoDevice* create_device(int devindex)
