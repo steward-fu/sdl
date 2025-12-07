@@ -65,7 +65,7 @@ GLfloat bg_vertices[] = {
 };
 #endif
 
-#if defined(QX1000)
+#if defined(QX1000) || defined(QX1050)
 GLfloat bg_vertices[] = {
     -1.0f,  1.0f, 0.0f, 0.0f, 0.0f,
     -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
