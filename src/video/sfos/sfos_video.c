@@ -31,6 +31,7 @@ typedef enum {
     FILTER_BLUR
 } sfos_filter_t;
 
+static int pixel_perfect = 1;
 static wayland wl = { 0 };
 static sfos_filter_t filter = 0;
 
@@ -86,35 +87,85 @@ GLushort indices[] = {
 };
 
 static const char *vert_shader_code =
-"   attribute vec4 vert_pos;                                            \n"
-"   attribute vec2 vert_coord;                                          \n"
-"   varying vec2 frag_coord;                                            \n"
-"   void main()                                                         \n"
-"   {                                                                   \n"
-"       frag_coord = vert_coord;                                        \n"
-"       gl_Position = vert_pos;                                         \n"
-"   }                                                                   \n";
+"   attribute vec4 vert_tex_pos;                                            \n"
+"   attribute vec2 vert_tex_coord;                                          \n"
+"   varying vec2 frag_tex_coord;                                            \n"
+
+"   void main()                                                             \n"
+"   {                                                                       \n"
+"       const float angle = 270.0 * (3.1415 * 2.0) / 360.0;                 \n"
+"       mat4 rot = mat4(                                                    \n"
+"           cos(angle), -sin(angle), 0.0, 0.0,                              \n"
+"           sin(angle),  cos(angle), 0.0, 0.0,                              \n"
+"                  0.0,         0.0, 1.0, 0.0,                              \n"
+"                  0.0,         0.0, 0.0, 1.0);                             \n"
+"       gl_Position = vert_tex_pos * rot;                                   \n"
+"       frag_tex_coord = vert_tex_coord;                                    \n"
+"}                                                                          \n";
 
 static const char *frag_shader_code =
-"   precision mediump float;                                            \n"
-"   varying vec2 frag_coord;                                            \n"
-"   uniform sampler2D frag_sampler;                                     \n"
-"   const vec2 HALF = vec2(0.5);                                        \n"
-"   const float aSin = 1.0;                                             \n"
-"   const float aCos = 0.000046;                                        \n"
-"   mat2 rotMat = mat2(aCos, -aSin, aSin, aCos);                        \n"
-"   mat2 scaleMat = mat2(1.0, 0.0, 0.0, 1.0);                           \n"
-"   mat2 scaleMatInv = mat2(1.0, 0.0, 0.0, 1.0);                        \n"
-"   void main()                                                         \n"
-"   {                                                                   \n"
-"       vec3 tex;                                                       \n"
-"       vec2 tc = frag_coord;                                           \n"
-"       tc -= HALF.xy;                                                  \n"
-"       tc = scaleMatInv * rotMat * scaleMat * tc;                      \n"
-"       tc += HALF.xy;                                                  \n"
-"       tex = texture2D(frag_sampler, tc).rgb;                          \n"
-"       gl_FragColor = vec4(tex, 1.0);                                  \n"
-"   }                                                                   \n";
+"   precision highp float;                                                  \n"
+
+"   varying vec2 frag_tex_coord;                                            \n"
+"   uniform vec4 frag_screen;                                               \n"
+"   uniform sampler2D frag_tex_sampler;                                     \n"
+
+"   void main()                                                             \n"
+"   {                                                                       \n"
+"       vec3 tex = texture2D(frag_tex_sampler, frag_tex_coord).rgb;         \n"
+"       gl_FragColor = vec4(tex, 1.0);                                      \n"
+"   }                                                                       \n";
+
+static const char *frag_shader_lcd1x_code =
+"precision highp float;\n"
+
+"uniform vec4 frag_screen;\n"
+"varying vec2 frag_tex_coord;\n"
+"uniform sampler2D frag_tex_sampler;\n"
+
+"#define BRIGHTEN_SCANLINES 16.0\n"
+"#define BRIGHTEN_LCD 4.0\n"
+
+"#define PI 3.141592654\n"
+
+"const float NDS_SCREEN_HEIGHT = 144.0;\n"
+"const float INV_BRIGHTEN_SCANLINES_INC = 1.0 / (BRIGHTEN_SCANLINES + 1.0);\n"
+"const float INV_BRIGHTEN_LCD_INC = 1.0 / (BRIGHTEN_LCD + 1.0);\n"
+
+"void main()\n"
+"{\n"
+"	vec2 angle = 2.0 * PI * (((frag_tex_coord.xy * frag_screen.zw) * NDS_SCREEN_HEIGHT * frag_screen.y) - 0.25);\n"
+
+"	float yfactor = (BRIGHTEN_SCANLINES + sin(angle.y)) * INV_BRIGHTEN_SCANLINES_INC;\n"
+"	float xfactor = (BRIGHTEN_LCD + sin(angle.x)) * INV_BRIGHTEN_LCD_INC;\n"
+
+"	vec3 colour = texture2D(frag_tex_sampler, frag_tex_coord.xy).rgb;\n"
+"	colour.rgb = yfactor * xfactor * colour.rgb;\n"
+
+"	gl_FragColor = vec4(colour.rgb, 1.0);\n"
+"}";
+
+static const char *frag_shader_lcd3x_code =
+"precision highp float;\n"
+
+"uniform vec4 frag_screen;\n"
+"varying vec2 frag_tex_coord;\n"
+"uniform sampler2D frag_tex_sampler;\n"
+
+"#define PI 3.141592654\n"
+"#define brighten_scanlines 16.0\n"
+"#define brighten_lcd 4.0\n"
+"void main()\n"
+"{\n"
+"    vec3 res = texture2D(frag_tex_sampler, frag_tex_coord).xyz;\n"
+"    vec2 omega = PI * 2.0 * frag_screen.xy;\n"
+"    vec3 offsets = PI * vec3(0.5, 0.5 - (2.0 / 3.0), 0.5 - (4.0 / 3.0));\n"
+"    vec2 angle = frag_tex_coord * omega;\n"
+"    float yfactor = (brighten_scanlines + sin(angle.y)) / (brighten_scanlines + 1.0);\n"
+"    vec3 xfactors = (brighten_lcd + sin(angle.x + offsets)) / (brighten_lcd + 1.0);\n"
+"    vec3 color = yfactor * xfactors * res;\n"
+"    gl_FragColor = vec4(color.x, color.y, color.z, 1.0);\n"
+"}\n";
 
 static void cb_handle(
     void* dat,
@@ -316,7 +367,9 @@ void egl_init(void)
     }
 
     frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(frag_shader, 1, &frag_shader_code, NULL);
+    //glShaderSource(frag_shader, 1, &frag_shader_code, NULL);
+    //glShaderSource(frag_shader, 1, &frag_shader_lcd1x_code, NULL);
+    glShaderSource(frag_shader, 1, &frag_shader_lcd3x_code, NULL);
     glCompileShader(frag_shader);
     
     glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &compiled);
@@ -339,9 +392,10 @@ void egl_init(void)
     glDeleteShader(frag_shader);
     glUseProgram(wl.egl.program);
 
-    wl.egl.pos = glGetAttribLocation(wl.egl.program, "vert_pos");
-    wl.egl.coord = glGetAttribLocation(wl.egl.program, "vert_coord");
-    wl.egl.sampler = glGetUniformLocation(wl.egl.program, "frag_sampler");
+    wl.egl.pos = glGetAttribLocation(wl.egl.program, "vert_tex_pos");
+    wl.egl.coord = glGetAttribLocation(wl.egl.program, "vert_tex_coord");
+    wl.egl.sampler = glGetUniformLocation(wl.egl.program, "frag_tex_sampler");
+    wl.egl.screen = glGetUniformLocation(wl.egl.program, "frag_screen");
 
     glGenTextures(1, &wl.egl.tex);
     glBindTexture(GL_TEXTURE_2D, wl.egl.tex);
@@ -389,6 +443,8 @@ static void* draw_handler(void* pParam)
         if (wl.disp_ready && ((pre_flip != wl.flip) || (pre_app_flip != wl.app_flip))) {
             pre_flip = wl.flip;
             pre_app_flip = wl.app_flip;
+
+            glUniform4f(wl.egl.screen, wl.info.w, wl.info.h, 1.0 / wl.info.w, 1.0 / wl.info.h);
 
             glVertexAttribPointer(
                 wl.egl.pos,
@@ -534,6 +590,14 @@ static int video_init(_THIS, SDL_PixelFormat* vformat)
         filter = FILTER_PIXEL;
     }
 
+    var = getenv("SFOS_STRETCH");
+    if (var && !strcmp(var, "ASPECT")) {
+        pixel_perfect = 0;
+    }
+    else {
+        pixel_perfect = 1;
+    }
+
     wl.thread.running = 1;
     pthread_create(&wl.thread.id[0], NULL, disp_handler, NULL);
     pthread_create(&wl.thread.id[1], NULL, input_handler, NULL);
@@ -563,23 +627,22 @@ static int change_geometry(int w, int h, int bpp)
     wl.info.h = h;
     wl.info.bpp = bpp;
     wl.info.size = wl.info.w * (wl.info.bpp / 8) * wl.info.h;
-    debug("%s, w=%d, h=%d, bpp=%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
+    printf("%s, w=%d, h=%d, bpp=%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
 
     float c0 = (float)LCD_H / wl.info.w;
     float c1 = (float)LCD_W / wl.info.h;
     float scale = c0 > c1 ? c1 : c0;
 
-    if (filter == FILTER_PIXEL) {
+    if (pixel_perfect) {
         scale = (int)scale;
     }
     if (scale <= 0) {
         scale = 1;
     }
-    debug("%s, scale=%lf\n", __func__, scale);
+    printf("%s, scale=%lf\n", __func__, scale);
 
-    float y0 = ((float)(wl.info.w * scale) / LCD_H);
-    float x0 = ((float)(wl.info.h * scale) / LCD_W);
-    debug("%s, x0:%lf, y0:%lf\n", __func__, x0, y0);
+    float y0 = ((float)(wl.info.h * scale) / LCD_W);
+    float x0 = ((float)(wl.info.w * scale) / LCD_H);
 
     fb_vertices[0] = -x0;
     fb_vertices[1] = y0;

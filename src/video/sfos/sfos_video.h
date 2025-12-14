@@ -71,6 +71,7 @@ typedef struct {
 
         GLint pos;
         GLint coord;
+        GLint screen;
         GLint sampler;
     } egl;
     
