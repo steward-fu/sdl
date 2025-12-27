@@ -34,8 +34,10 @@ typedef enum {
 static int pixel_perfect = 1;
 static wayland wl = { 0 };
 static sfos_filter_t filter = 0;
+static int reload_shader = 0;
+static char shader_name[MAX_PATH] = { 0 };
 
-EGLint surf_cfg[] = {
+static EGLint surf_cfg[] = {
     EGL_SURFACE_TYPE,
     EGL_WINDOW_BIT,
     EGL_RENDERABLE_TYPE,
@@ -51,14 +53,14 @@ EGLint surf_cfg[] = {
     EGL_NONE
 };
 
-EGLint ctx_cfg[] = {
+static EGLint ctx_cfg[] = {
     EGL_CONTEXT_CLIENT_VERSION, 
     2, 
     EGL_NONE
 };
 
 #if defined(XT897) || defined(XT894)
-GLfloat bg_vertices[] = {
+static GLfloat bg_vertices[] = {
     -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 
     -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
      1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 
@@ -67,7 +69,7 @@ GLfloat bg_vertices[] = {
 #endif
 
 #if defined(QX1000) || defined(QX1050)
-GLfloat bg_vertices[] = {
+static GLfloat bg_vertices[] = {
     -1.0f,  1.0f, 0.0f, 0.0f, 0.0f,
     -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
      1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
@@ -75,18 +77,18 @@ GLfloat bg_vertices[] = {
 };
 #endif
 
-GLfloat fb_vertices[] = {
+static GLfloat fb_vertices[] = {
     -0.5f,  0.5f, 0.0f, 0.0f, 0.0f, 
     -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,
      0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 
      0.5f,  0.5f, 0.0f, 1.0f, 0.0f
 };
 
-GLushort indices[] = {
+static GLushort indices[] = {
     0, 1, 2, 0, 2, 3
 };
 
-static const char *vert_shader_code =
+static const char *def_vert_src =
 "   attribute vec4 vert_tex_pos;                                            \n"
 "   attribute vec2 vert_tex_coord;                                          \n"
 "   varying vec2 frag_tex_coord;                                            \n"
@@ -103,7 +105,7 @@ static const char *vert_shader_code =
 "       frag_tex_coord = vert_tex_coord;                                    \n"
 "}                                                                          \n";
 
-static const char *frag_shader_code =
+static const char *def_frag_src =
 "   precision highp float;                                                  \n"
 
 "   varying vec2 frag_tex_coord;                                            \n"
@@ -116,7 +118,7 @@ static const char *frag_shader_code =
 "       gl_FragColor = vec4(tex, 1.0);                                      \n"
 "   }                                                                       \n";
 
-static const char *frag_shader_lcd1x_code =
+static const char *def_frag_lcd1x_src =
 "precision highp float;\n"
 
 "uniform vec4 frag_screen;\n"
@@ -128,7 +130,7 @@ static const char *frag_shader_lcd1x_code =
 
 "#define PI 3.141592654\n"
 
-"const float NDS_SCREEN_HEIGHT = 144.0;\n"
+"const float NDS_SCREEN_HEIGHT = 240.0;\n"
 "const float INV_BRIGHTEN_SCANLINES_INC = 1.0 / (BRIGHTEN_SCANLINES + 1.0);\n"
 "const float INV_BRIGHTEN_LCD_INC = 1.0 / (BRIGHTEN_LCD + 1.0);\n"
 
@@ -145,7 +147,7 @@ static const char *frag_shader_lcd1x_code =
 "	gl_FragColor = vec4(colour.rgb, 1.0);\n"
 "}";
 
-static const char *frag_shader_lcd3x_code =
+static const char *def_frag_lcd3x_src =
 "precision highp float;\n"
 
 "uniform vec4 frag_screen;\n"
@@ -266,7 +268,7 @@ static const struct wl_shell_surface_listener cb_shell_surf = {
     cb_popup_done
 };
 
-void egl_quit(void)
+static void egl_quit(void)
 {
     eglSwapBuffers(wl.egl.display, wl.egl.surface);
     eglDestroySurface(wl.egl.display, wl.egl.surface);
@@ -277,7 +279,7 @@ void egl_quit(void)
     glDeleteProgram(wl.egl.program);
 }
 
-void wl_quit(void)
+static void wl_quit(void)
 {
     wl_shell_surface_destroy(wl.shell_surface);
     wl_shell_destroy(wl.shell);
@@ -295,7 +297,7 @@ void wl_quit(void)
     }
 }
 
-void wl_init(void)
+static void wl_init(void)
 {
     wl.display = wl_display_connect(NULL);
     wl.registry = wl_display_get_registry(wl.display);
@@ -327,14 +329,97 @@ void wl_init(void)
     }
 }
 
-void egl_init(void)
+static int apply_shader_code(const char *name)
+{
+    int r = 0;
+    GLint success = 0;
+    GLint frag_shader = 0;
+    GLint vert_shader = 0;
+    const char *vert_src = def_vert_src;
+    const char *frag_src = def_frag_src;
+
+    debug("call %s(name=%p)\n", __func__, name);
+
+    if (name && !strcmp(name, "LCD1X")) {
+        frag_src = def_frag_lcd1x_src;
+        debug("use LCD1X\n");
+    }
+    else if (name && !strcmp(name, "LCD3X")) {
+        frag_src = def_frag_lcd3x_src;
+        debug("use LCD3X\n");
+    }
+
+    do {
+        vert_shader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vert_shader, 1, (const char * const *)&vert_src, NULL);
+        glCompileShader(vert_shader);
+        debug("vert_shader id=%d\n", vert_shader);
+
+        glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &success);
+        debug("vert_shader compile status (%s)\n", success ? "success" : "fail");
+        if (!success) {
+            r = -1;
+            debug("failed to compile vertex shader\n");
+            break;
+        }
+
+        frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(frag_shader, 1, (const char * const *)&frag_src, NULL);
+        glCompileShader(frag_shader);
+        debug("frag_shader id=%d\n", frag_shader);
+
+        glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &success);
+        debug("frag_shader compile status (%s)\n", success ? "success" : "fail");
+        if (!success) {
+            r = -1;
+            debug("failed to compile fragment shader\n");
+            break;
+        }
+
+        glUseProgram(0);
+        if (wl.egl.program) {
+            glDeleteProgram(wl.egl.program);
+            if (glIsProgram(wl.egl.program)) {
+                debug("opengl es program still exists\n");
+            }
+            else {
+                debug("opengl es program deleted\n");
+            }
+        }
+
+        wl.egl.program = glCreateProgram();
+        glAttachShader(wl.egl.program, vert_shader);
+        glAttachShader(wl.egl.program, frag_shader);
+        glLinkProgram(wl.egl.program);
+        glDeleteShader(vert_shader);
+        glDeleteShader(frag_shader);
+
+        glGetProgramiv(wl.egl.program, GL_LINK_STATUS, &success);
+        debug("opengl es program link status (%s)\n", success ? "success" : "fail");
+        if (!success) {
+            r = -1;
+            debug("failed to link program\n");
+            break;
+        }
+
+        glUseProgram(wl.egl.program);
+
+        wl.egl.pos = glGetAttribLocation(wl.egl.program, "vert_tex_pos");
+        wl.egl.coord = glGetAttribLocation(wl.egl.program, "vert_tex_coord");
+        wl.egl.screen = glGetUniformLocation(wl.egl.program, "frag_screen");
+        wl.egl.sampler = glGetUniformLocation(wl.egl.program, "frag_tex_sampler");
+    } while(0);
+
+    return r;
+}
+
+static void egl_init(void)
 {
     EGLint cnt = 0;
     EGLint major = 0;
     EGLint minor = 0;
     EGLConfig cfg = 0;
-    GLint frag_shader = 0;
-    GLint vert_shader = 0;
+    const char *shader = getenv("SFOS_SHADER");
 
     wl.egl.display = eglGetDisplay((EGLNativeDisplayType)wl.display);
     eglInitialize(wl.egl.display, &major, &minor);
@@ -344,58 +429,7 @@ void egl_init(void)
     wl.egl.context = eglCreateContext(wl.egl.display, cfg, EGL_NO_CONTEXT, ctx_cfg);
     eglMakeCurrent(wl.egl.display, wl.egl.surface, wl.egl.surface, wl.egl.context);
 
-    debug("%s, egl.display @%p\n", __func__, wl.egl.display);
-    debug("%s, egl.window @%p\n", __func__, wl.window);
-    debug("%s, egl.surface @%p\n", __func__, wl.egl.surface);
-    debug("%s, egl.context @%p\n", __func__, wl.egl.context);
-
-    vert_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vert_shader, 1, &vert_shader_code, NULL);
-    glCompileShader(vert_shader);
-
-    GLint compiled = 0;
-    glGetShaderiv(vert_shader, GL_COMPILE_STATUS, &compiled);
-    if (!compiled) {
-        GLint len = 0;
-        glGetShaderiv(vert_shader, GL_INFO_LOG_LENGTH, &len);
-        if (len > 1) {
-            char* info = malloc(sizeof(char) * len);
-            glGetShaderInfoLog(vert_shader, len, NULL, info);
-            debug("%s, failed to compile vert_shader: %s\n", __func__, info);
-            free(info);
-        }
-    }
-
-    frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    //glShaderSource(frag_shader, 1, &frag_shader_code, NULL);
-    //glShaderSource(frag_shader, 1, &frag_shader_lcd1x_code, NULL);
-    glShaderSource(frag_shader, 1, &frag_shader_lcd3x_code, NULL);
-    glCompileShader(frag_shader);
-    
-    glGetShaderiv(frag_shader, GL_COMPILE_STATUS, &compiled);
-    if (!compiled) {
-        GLint len = 0;
-        glGetShaderiv(frag_shader, GL_INFO_LOG_LENGTH, &len);
-        if (len > 1) {
-            char* info = malloc(sizeof(char) * len);
-            glGetShaderInfoLog(frag_shader, len, NULL, info);
-            debug("%s, failed to compile frag_Shader: %s\n", __func__, info);
-            free(info);
-        }
-    }
-
-    wl.egl.program = glCreateProgram();
-    glAttachShader(wl.egl.program, vert_shader);
-    glAttachShader(wl.egl.program, frag_shader);
-    glLinkProgram(wl.egl.program);
-    glDeleteShader(vert_shader);
-    glDeleteShader(frag_shader);
-    glUseProgram(wl.egl.program);
-
-    wl.egl.pos = glGetAttribLocation(wl.egl.program, "vert_tex_pos");
-    wl.egl.coord = glGetAttribLocation(wl.egl.program, "vert_tex_coord");
-    wl.egl.sampler = glGetUniformLocation(wl.egl.program, "frag_tex_sampler");
-    wl.egl.screen = glGetUniformLocation(wl.egl.program, "frag_screen");
+    apply_shader_code(shader);
 
     glGenTextures(1, &wl.egl.tex);
     glBindTexture(GL_TEXTURE_2D, wl.egl.tex);
@@ -421,11 +455,6 @@ void egl_init(void)
     glEnableVertexAttribArray(wl.egl.coord);
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(wl.egl.sampler, 0);
-
-    debug("%s, egl.tex = 0x%x\n", __func__, wl.egl.tex);
-    debug("%s, egl.pos = 0x%x\n", __func__, wl.egl.pos);
-    debug("%s, egl.coord = 0x%x\n", __func__, wl.egl.coord);
-    debug("%s, egl.sampler = 0x%x\n", __func__, wl.egl.sampler);
 }
 
 static void* draw_handler(void* pParam)
@@ -440,6 +469,11 @@ static void* draw_handler(void* pParam)
     wl.draw_ready = 1;
 
     while (wl.thread.running) {
+        if (reload_shader) {
+            reload_shader = 0;
+            apply_shader_code(shader_name);
+        }
+
         if (wl.disp_ready && ((pre_flip != wl.flip) || (pre_app_flip != wl.app_flip))) {
             pre_flip = wl.flip;
             pre_app_flip = wl.app_flip;
@@ -627,7 +661,7 @@ static int change_geometry(int w, int h, int bpp)
     wl.info.h = h;
     wl.info.bpp = bpp;
     wl.info.size = wl.info.w * (wl.info.bpp / 8) * wl.info.h;
-    printf("%s, w=%d, h=%d, bpp=%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
+    debug("%s, w=%d, h=%d, bpp=%d\n", __func__, wl.info.w, wl.info.h, wl.info.bpp);
 
     float c0 = (float)LCD_H / wl.info.w;
     float c1 = (float)LCD_W / wl.info.h;
@@ -639,7 +673,7 @@ static int change_geometry(int w, int h, int bpp)
     if (scale <= 0) {
         scale = 1;
     }
-    printf("%s, scale=%lf\n", __func__, scale);
+    debug("%s, scale=%lf\n", __func__, scale);
 
     float y0 = ((float)(wl.info.h * scale) / LCD_W);
     float x0 = ((float)(wl.info.w * scale) / LCD_H);
@@ -793,6 +827,18 @@ int fast_flip(const void *p, int wait)
         usleep(10);
     }
     debug("%s, wait--\n", __func__);
+
+    return 0;
+}
+
+int load_shader_code(const char *name)
+{
+    reload_shader = 1;
+
+    shader_name[0] = 0;
+    if (name) {
+        strcpy(shader_name, name);
+    }
 
     return 0;
 }

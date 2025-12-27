@@ -31,6 +31,7 @@
 
 #define DEBUG       0
 #define MAX_FB      2
+#define MAX_PATH    255
 
 #if defined(QX1000) || defined(QX1050)
 #define LCD_W       1080
