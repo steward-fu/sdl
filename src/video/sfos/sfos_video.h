@@ -97,6 +97,7 @@ typedef struct {
 
     int app_flip;
     void *app_fg;
+    int swap_color;
 } wayland;
 
 #endif

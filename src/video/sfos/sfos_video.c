@@ -24,6 +24,8 @@
     #define debug(...) (void)0
 #endif
 
+#define GL_BGRA 0x80E1
+
 extern uint8_t mykey[KEY_MAX][2];
 
 typedef enum {
@@ -501,11 +503,11 @@ static void* draw_handler(void* pParam)
             glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
-                wl.info.bpp == 16 ? GL_RGB : GL_RGBA,
+                wl.info.bpp == 16 ? GL_RGB : (wl.swap_color ? GL_BGRA : GL_RGBA),
                 wl.info.w,
                 wl.info.h,
                 0,
-                wl.info.bpp == 16 ? GL_RGB : GL_RGBA,
+                wl.info.bpp == 16 ? GL_RGB : (wl.swap_color ? GL_BGRA : GL_RGBA),
                 wl.info.bpp == 16 ? GL_UNSIGNED_SHORT_5_6_5 : GL_UNSIGNED_BYTE,
                 wl.app_fg ? wl.app_fg : wl.fg[wl.flip ^ 1]
             );
@@ -701,6 +703,7 @@ static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, in
 		return NULL;
 	}
 
+    wl.swap_color = 0;
 	current->flags = flags | SDL_DOUBLEBUF | SDL_PREALLOC;
 	current->w = w;
 	current->h = h;
@@ -829,6 +832,18 @@ int fast_flip(const void *p, int wait)
     debug("%s, wait--\n", __func__);
 
     return 0;
+}
+
+int swap_color(int val)
+{
+    wl.swap_color = !!val;
+
+    return 0;
+}
+
+int is_fast_done(void)
+{
+    return wl.app_fg == NULL ? 1 : 0;
 }
 
 int load_shader_code(const char *name)
