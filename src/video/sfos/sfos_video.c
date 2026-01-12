@@ -463,12 +463,16 @@ static void* draw_handler(void* pParam)
 {
     int pre_flip = -1;
     int pre_app_flip = -1;
+    struct timeval start, end;
+    long mtime, seconds, useconds;
 
     debug("%s++\n", __func__);
 
     wl_init();
     egl_init();
     wl.draw_ready = 1;
+
+    eglSwapInterval(wl.egl.display, 1);
 
     while (wl.thread.running) {
         if (reload_shader) {
@@ -481,7 +485,6 @@ static void* draw_handler(void* pParam)
             pre_app_flip = wl.app_flip;
 
             glUniform4f(wl.egl.screen, wl.info.w, wl.info.h, 1.0 / wl.info.w, 1.0 / wl.info.h);
-
             glVertexAttribPointer(
                 wl.egl.pos,
                 3,
@@ -512,10 +515,27 @@ static void* draw_handler(void* pParam)
                 wl.app_fg ? wl.app_fg : wl.fg[wl.flip ^ 1]
             );
             wl.app_fg = NULL;
-
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
+
+#if 0
+            gettimeofday(&start, NULL);
+#endif
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
-            debug("swap buffer\n");
+
+#if 0
+            gettimeofday(&end, NULL);
+            seconds = end.tv_sec - start.tv_sec;
+            useconds = end.tv_usec - start.tv_usec;
+            if (useconds < 0) {
+                seconds--;
+                useconds += 1000000;
+            }
+            mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+            if (mtime > 17) {
+                printf("SwapBuffer(), %ld\n", mtime);
+            }
+#endif
+
 #if 1
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
