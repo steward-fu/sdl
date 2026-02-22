@@ -92,12 +92,11 @@ typedef struct {
     int draw_ready;
 
     int flip;
-    void *bg;
-    void *fg[MAX_FB];
-
-    int app_flip;
-    void *app_fg;
     int swap_color;
+
+    void *bg;
+    void *app_fg;
+    void *fg[MAX_FB];
 } wayland;
 
 #endif

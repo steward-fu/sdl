@@ -461,8 +461,6 @@ static void egl_init(void)
 
 static void* draw_handler(void* pParam)
 {
-    int pre_flip = -1;
-    int pre_app_flip = -1;
     struct timeval start, end;
     long mtime, seconds, useconds;
 
@@ -480,10 +478,7 @@ static void* draw_handler(void* pParam)
             apply_shader_code(shader_name);
         }
 
-        if (wl.disp_ready && ((pre_flip != wl.flip) || (pre_app_flip != wl.app_flip))) {
-            pre_flip = wl.flip;
-            pre_app_flip = wl.app_flip;
-
+        if (wl.disp_ready && wl.app_fg) {
             glUniform4f(wl.egl.screen, wl.info.w, wl.info.h, 1.0 / wl.info.w, 1.0 / wl.info.h);
             glVertexAttribPointer(
                 wl.egl.pos,
@@ -512,7 +507,7 @@ static void* draw_handler(void* pParam)
                 0,
                 wl.info.bpp == 16 ? GL_RGB : (wl.swap_color ? GL_BGRA : GL_RGBA),
                 wl.info.bpp == 16 ? GL_UNSIGNED_SHORT_5_6_5 : GL_UNSIGNED_BYTE,
-                wl.app_fg ? wl.app_fg : wl.fg[wl.flip ^ 1]
+                wl.app_fg
             );
             wl.app_fg = NULL;
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
@@ -714,7 +709,7 @@ static int change_geometry(int w, int h, int bpp)
 
 static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
 {
-    debug("call %s(w=%d, h=%d, bpp=%d)\n", __func__, w, h, bpp);
+    debug("call %s(w=%d, h=%d, bpp=%d, flags=%d, surface=%p)\n", __func__, w, h, bpp, flags, current);
 
     change_geometry(w, h, bpp);
 
@@ -723,8 +718,9 @@ static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, in
 		return NULL;
 	}
 
+    wl.app_fg = NULL;
     wl.swap_color = 0;
-	current->flags = flags | SDL_DOUBLEBUF | SDL_PREALLOC;
+	current->flags = flags | SDL_PREALLOC; //SDL_DOUBLEBUF
 	current->w = w;
 	current->h = h;
     current->pitch = w * (bpp / 8);
@@ -756,15 +752,15 @@ static void unlock_hw_surface(_THIS, SDL_Surface* surface)
 
 static int flip_hw_surface(_THIS, SDL_Surface* surface)
 {
-    debug("call %s\n", __func__);
+    debug("call %s, ready:%d, draw_ready:%d, surface:%p\n", __func__, wl.disp_ready, wl.draw_ready, surface);
 
     if (wl.disp_ready && wl.draw_ready) {
+        wl.app_fg = wl.fg[wl.flip];
+
         if (surface) {
             wl.flip ^= 1;
-            debug("%s, flip=%d\n", __func__, wl.flip);
-
             surface->pixels = wl.fg[wl.flip];
-            debug("%s, update surface buffer to %p\n", __func__, surface->pixels);
+            debug("%s, update surface buffer to %p, flip=%d\n", __func__, surface->pixels, wl.flip);
         }
     }
 
@@ -841,10 +837,9 @@ VideoBootStrap sfos_bootstrap = {
 
 int fast_flip(const void *p, int wait)
 {
-    wl.app_fg = (void *)p;
-    wl.app_flip ^= 1;
-    debug("%s, wl.app_flip=%d, p=%p, wait=%d\n", __func__, wl.app_flip, p, wait);
+    debug("%s, p=%p, wait=%d\n", __func__, p, wait);
 
+    wl.app_fg = (void *)p;
     debug("%s, wait++\n", __func__);
     while (wait && wl.app_fg) {
         usleep(10);
