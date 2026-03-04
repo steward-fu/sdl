@@ -291,12 +291,14 @@ static void wl_quit(void)
     wl_egl_window_destroy(wl.window);
     wl_display_disconnect(wl.display);
 
+    free(wl.pixels);
+    wl.pixels = NULL;
+
+    free(wl.fg);
+    wl.fg = NULL;
+
     free(wl.bg);
     wl.bg = NULL;
-    for (int i = 0; i <MAX_FB; i++) {
-        free(wl.fg[i]);
-        wl.fg[i] = NULL;
-    }
 }
 
 static void wl_init(void)
@@ -325,10 +327,8 @@ static void wl_init(void)
     debug("%s, wl.shell_surface @%p\n", __func__, wl.shell_surface);
     debug("%s, wl.region @%p\n", __func__, wl.region);
 
+    wl.fg = calloc(LCD_W * LCD_H * 4, 1);
     wl.bg = calloc(LCD_W * LCD_H * 4, 1);
-    for (int i = 0; i < MAX_FB; i++) {
-        wl.fg[i] = calloc(LCD_W * LCD_H * 4, 1);
-    }
 }
 
 static int apply_shader_code(const char *name)
@@ -461,16 +461,13 @@ static void egl_init(void)
 
 static void* draw_handler(void* pParam)
 {
-    struct timeval start, end;
-    long mtime, seconds, useconds;
-
     debug("%s++\n", __func__);
 
     wl_init();
     egl_init();
     wl.draw_ready = 1;
 
-    eglSwapInterval(wl.egl.display, 1);
+    eglSwapInterval(wl.egl.display, 0);
 
     while (wl.thread.running) {
         if (reload_shader) {
@@ -478,7 +475,8 @@ static void* draw_handler(void* pParam)
             apply_shader_code(shader_name);
         }
 
-        if (wl.disp_ready && wl.app_fg) {
+        if (wl.disp_ready && wl.flip) {
+            wl.flip = 0;
             glUniform4f(wl.egl.screen, wl.info.w, wl.info.h, 1.0 / wl.info.w, 1.0 / wl.info.h);
             glVertexAttribPointer(
                 wl.egl.pos,
@@ -507,29 +505,10 @@ static void* draw_handler(void* pParam)
                 0,
                 wl.info.bpp == 16 ? GL_RGB : (wl.swap_color ? GL_BGRA : GL_RGBA),
                 wl.info.bpp == 16 ? GL_UNSIGNED_SHORT_5_6_5 : GL_UNSIGNED_BYTE,
-                wl.app_fg
+                wl.fg
             );
-            wl.app_fg = NULL;
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
-
-#if 0
-            gettimeofday(&start, NULL);
-#endif
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
-
-#if 0
-            gettimeofday(&end, NULL);
-            seconds = end.tv_sec - start.tv_sec;
-            useconds = end.tv_usec - start.tv_usec;
-            if (useconds < 0) {
-                seconds--;
-                useconds += 1000000;
-            }
-            mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
-            if (mtime > 17) {
-                printf("SwapBuffer(), %ld\n", mtime);
-            }
-#endif
 
 #if 1
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -718,13 +697,14 @@ static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, in
 		return NULL;
 	}
 
-    wl.app_fg = NULL;
     wl.swap_color = 0;
-	current->flags = flags | SDL_PREALLOC; //SDL_DOUBLEBUF
+    wl.pixels = calloc(w * h * (bpp / 8), 1);
+
+	current->flags = flags | SDL_PREALLOC;
 	current->w = w;
 	current->h = h;
     current->pitch = w * (bpp / 8);
-    current->pixels = wl.fg[wl.flip];
+    current->pixels = wl.pixels;
 
     return current;
 }
@@ -755,11 +735,9 @@ static int flip_hw_surface(_THIS, SDL_Surface* surface)
     debug("call %s, ready:%d, draw_ready:%d, surface:%p\n", __func__, wl.disp_ready, wl.draw_ready, surface);
 
     if (wl.disp_ready && wl.draw_ready) {
-        wl.app_fg = wl.fg[wl.flip];
-
         if (surface) {
-            wl.flip ^= 1;
-            surface->pixels = wl.fg[wl.flip];
+            memcpy(wl.fg, surface->pixels, wl.info.w * wl.info.h * (wl.info.bpp / 8));
+            wl.flip = 1;
             debug("%s, update surface buffer to %p, flip=%d\n", __func__, surface->pixels, wl.flip);
         }
     }
@@ -835,30 +813,11 @@ VideoBootStrap sfos_bootstrap = {
     create_device
 };
 
-int fast_flip(const void *p, int wait)
-{
-    debug("%s, p=%p, wait=%d\n", __func__, p, wait);
-
-    wl.app_fg = (void *)p;
-    debug("%s, wait++\n", __func__);
-    while (wait && wl.app_fg) {
-        usleep(10);
-    }
-    debug("%s, wait--\n", __func__);
-
-    return 0;
-}
-
 int swap_color(int val)
 {
     wl.swap_color = !!val;
 
     return 0;
-}
-
-int is_fast_done(void)
-{
-    return wl.app_fg == NULL ? 1 : 0;
 }
 
 int load_shader_code(const char *name)

@@ -11,12 +11,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
+#include <poll.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <errno.h>
 #include <syscall.h>
 #include <sys/mman.h>
+#include <sys/eventfd.h>
 #include <linux/input.h>
 
 #include <wayland-client.h>
@@ -95,8 +99,8 @@ typedef struct {
     int swap_color;
 
     void *bg;
-    void *app_fg;
-    void *fg[MAX_FB];
+    void *fg;
+    void *pixels;
 } wayland;
 
 #endif
