@@ -467,7 +467,7 @@ static void* draw_handler(void* pParam)
     egl_init();
     wl.draw_ready = 1;
 
-    eglSwapInterval(wl.egl.display, 0);
+    eglSwapInterval(wl.egl.display, 1);
 
     while (wl.thread.running) {
         if (reload_shader) {
@@ -476,7 +476,6 @@ static void* draw_handler(void* pParam)
         }
 
         if (wl.disp_ready && wl.flip) {
-            wl.flip = 0;
             glUniform4f(wl.egl.screen, wl.info.w, wl.info.h, 1.0 / wl.info.w, 1.0 / wl.info.h);
             glVertexAttribPointer(
                 wl.egl.pos,
@@ -509,6 +508,7 @@ static void* draw_handler(void* pParam)
             );
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
             eglSwapBuffers(wl.egl.display, wl.egl.surface);
+            wl.flip = 0;
 
 #if 1
             glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -688,7 +688,15 @@ static int change_geometry(int w, int h, int bpp)
 
 static SDL_Surface* set_video_mode(_THIS, SDL_Surface* current, int w, int h, int bpp, Uint32 flags)
 {
-    debug("call %s(w=%d, h=%d, bpp=%d, flags=%d, surface=%p)\n", __func__, w, h, bpp, flags, current);
+    debug(
+        "call %s(w=%d, h=%d, bpp=%d, flags=0x%x, surface=%p)\n",
+        __func__,
+        w,
+        h,
+        bpp,
+        flags,
+        current
+    );
 
     change_geometry(w, h, bpp);
 
@@ -732,14 +740,29 @@ static void unlock_hw_surface(_THIS, SDL_Surface* surface)
 
 static int flip_hw_surface(_THIS, SDL_Surface* surface)
 {
-    debug("call %s, ready:%d, draw_ready:%d, surface:%p\n", __func__, wl.disp_ready, wl.draw_ready, surface);
+    debug("call %s, wl.disp_ready:%d, wl.draw_ready:%d, surface:%p, w:%d, h:%d, bpp:%d\n",
+        __func__,
+        wl.disp_ready,
+        wl.draw_ready,
+        surface,
+        wl.info.w,
+        wl.info.h,
+        wl.info.bpp
+    );
 
-    if (wl.disp_ready && wl.draw_ready) {
-        if (surface) {
-            memcpy(wl.fg, surface->pixels, wl.info.w * wl.info.h * (wl.info.bpp / 8));
-            wl.flip = 1;
-            debug("%s, update surface buffer to %p, flip=%d\n", __func__, surface->pixels, wl.flip);
+    if (wl.disp_ready && wl.draw_ready && wl.info.w && wl.info.h && wl.info.bpp) {
+        while (wl.flip) {
+            usleep(10);
         }
+
+        memcpy(
+            wl.fg,
+            surface ? surface->pixels : wl.pixels,
+            wl.info.w * wl.info.h * (wl.info.bpp / 8)
+        );
+
+        wl.flip = 1;
+        debug("flip complete\n");
     }
 
     return 0;
@@ -827,6 +850,30 @@ int load_shader_code(const char *name)
     shader_name[0] = 0;
     if (name) {
         strcpy(shader_name, name);
+    }
+
+    return 0;
+}
+
+int load_bg_image(const char* path)
+{
+    if (wl.bg == NULL) {
+        return -1;
+    }
+
+    memset(wl.bg, 0, LCD_W * LCD_H * 4);
+    if (path == NULL) {
+        return 0;
+    }
+
+    SDL_Surface *png = IMG_Load(path);
+    if (png) {
+        SDL_Surface *tmp = SDL_CreateRGBSurface(SDL_SWSURFACE, 64, 64, 16, 0, 0, 0, 0);
+        SDL_Surface *cvt = SDL_ConvertSurface(png, tmp->format, 0);
+        memcpy(wl.bg, cvt->pixels, LCD_W * LCD_H * 2);
+        SDL_FreeSurface(cvt);
+        SDL_FreeSurface(tmp);
+        SDL_FreeSurface(png);
     }
 
     return 0;
